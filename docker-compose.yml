@@ -11,7 +11,7 @@ services:
       retries: 20
       start_period: 10s
 
-  # Pull llama3.2 on first run (cached in volume; subsequent starts are instant)
+  # Pull model on first run (cached in volume; subsequent starts are instant)
   ollama-init:
     image: ollama/ollama
     depends_on:
@@ -19,7 +19,8 @@ services:
         condition: service_healthy
     environment:
       - OLLAMA_HOST=http://ollama:11434
-    entrypoint: ["ollama", "pull", "llama3.2"]
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-mistral}
+    entrypoint: ["sh", "-c", "ollama pull $${OLLAMA_MODEL}"]
     restart: "no"
 
   # ── FastAPI backend ───────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ services:
     build: ./expense-app/backend
     environment:
       - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-mistral}
       - DB_PATH=/data/expenses.db
     volumes:
       - db_data:/data              # SQLite database persists here
@@ -43,5 +45,5 @@ services:
       - backend
 
 volumes:
-  ollama_data:   # llama3.2 model weights (~2 GB, downloaded once)
+  ollama_data:   # model weights (downloaded once, persisted across restarts)
   db_data:       # SQLite database
