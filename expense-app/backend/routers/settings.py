@@ -16,7 +16,7 @@ def get_ollama_settings():
     url = categorizer.DEFAULT_OLLAMA_URL or (url_row["value"] if url_row else "http://localhost:11434")
     return OllamaSettings(
         url=url,
-        model=model_row["value"] if model_row else "llama3.2",
+        model=model_row["value"] if model_row else categorizer.DEFAULT_MODEL,
     )
 
 

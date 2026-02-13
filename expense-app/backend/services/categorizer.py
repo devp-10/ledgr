@@ -10,7 +10,7 @@ from services.database import get_connection
 BATCH_SIZE = 5
 # OLLAMA_URL env var is set to http://ollama:11434 in Docker Compose
 DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-DEFAULT_MODEL = "llama3.2"
+DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "")
 
 
 def get_ollama_settings():

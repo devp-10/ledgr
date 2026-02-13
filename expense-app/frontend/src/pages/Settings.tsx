@@ -7,7 +7,7 @@ export function Settings() {
 
   const [ollamaSettings, setOllamaSettings] = useState<OllamaSettings>({
     url: 'http://localhost:11434',
-    model: 'llama3.2',
+    model: '',
   })
   const [testResult, setTestResult] = useState<OllamaTestResult | null>(null)
   const [testing, setTesting] = useState(false)
