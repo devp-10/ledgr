@@ -68,7 +68,7 @@ async def categorize_batch(
             validated.append("Other")
         return validated[: len(descriptions)]
     except Exception:
-        return ["Other"] * len(descriptions)
+        raise
 
 
 async def categorize_transactions(
