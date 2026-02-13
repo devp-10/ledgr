@@ -12,8 +12,10 @@ def get_ollama_settings():
     with get_connection() as conn:
         url_row = conn.execute("SELECT value FROM settings WHERE key='ollama_url'").fetchone()
         model_row = conn.execute("SELECT value FROM settings WHERE key='ollama_model'").fetchone()
+    # Env var (set by Docker Compose) always takes precedence over any saved DB value
+    url = categorizer.DEFAULT_OLLAMA_URL or (url_row["value"] if url_row else "http://localhost:11434")
     return OllamaSettings(
-        url=url_row["value"] if url_row else categorizer.DEFAULT_OLLAMA_URL,
+        url=url,
         model=model_row["value"] if model_row else "llama3.2",
     )
 
