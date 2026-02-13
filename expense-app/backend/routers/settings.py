@@ -13,7 +13,7 @@ def get_ollama_settings():
         url_row = conn.execute("SELECT value FROM settings WHERE key='ollama_url'").fetchone()
         model_row = conn.execute("SELECT value FROM settings WHERE key='ollama_model'").fetchone()
     return OllamaSettings(
-        url=url_row["value"] if url_row else "http://localhost:11434",
+        url=url_row["value"] if url_row else categorizer.DEFAULT_OLLAMA_URL,
         model=model_row["value"] if model_row else "llama3.2",
     )
 
