@@ -7,7 +7,7 @@ from typing import List, Optional, Callable, Awaitable
 from models import VALID_CATEGORIES
 from services.database import get_connection
 
-BATCH_SIZE = 20
+BATCH_SIZE = 5
 # OLLAMA_URL env var is set to http://ollama:11434 in Docker Compose
 DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = "llama3.2"
@@ -52,7 +52,7 @@ async def categorize_batch(
     response = await client.post(
         f"{url}/api/generate",
         json={"model": model, "prompt": prompt, "stream": False},
-        timeout=120.0,
+        timeout=180.0,
     )
     response.raise_for_status()
     raw = response.json()["response"].strip()
