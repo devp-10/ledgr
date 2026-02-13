@@ -49,26 +49,23 @@ async def categorize_batch(
     model: str,
 ) -> List[str]:
     prompt = build_prompt(descriptions)
-    try:
-        response = await client.post(
-            f"{url}/api/generate",
-            json={"model": model, "prompt": prompt, "stream": False},
-            timeout=120.0,
-        )
-        response.raise_for_status()
-        raw = response.json()["response"].strip()
-        match = re.search(r"\[.*?\]", raw, re.DOTALL)
-        if not match:
-            return ["Other"] * len(descriptions)
-        categories = json.loads(match.group())
-        validated = []
-        for cat in categories:
-            validated.append(cat if cat in VALID_CATEGORIES else "Other")
-        while len(validated) < len(descriptions):
-            validated.append("Other")
-        return validated[: len(descriptions)]
-    except Exception:
-        raise
+    response = await client.post(
+        f"{url}/api/generate",
+        json={"model": model, "prompt": prompt, "stream": False},
+        timeout=120.0,
+    )
+    response.raise_for_status()
+    raw = response.json()["response"].strip()
+    match = re.search(r"\[.*?\]", raw, re.DOTALL)
+    if not match:
+        return ["Other"] * len(descriptions)
+    categories = json.loads(match.group())
+    validated = []
+    for cat in categories:
+        validated.append(cat if cat in VALID_CATEGORIES else "Other")
+    while len(validated) < len(descriptions):
+        validated.append("Other")
+    return validated[: len(descriptions)]
 
 
 async def categorize_transactions(

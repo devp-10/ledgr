@@ -97,7 +97,7 @@ async def _run_categorization(job_id: str, ids: list, descriptions: list):
         _categorization_progress[job_id]["status"] = "done"
         _categorization_progress[job_id]["completed"] = total
     except Exception as e:
-        _categorization_progress[job_id]["status"] = f"error: {str(e)}"
+        _categorization_progress[job_id]["status"] = f"error: {str(e) or type(e).__name__}"
 
 
 @router.get("/transactions/categorization-status/{job_id}")
