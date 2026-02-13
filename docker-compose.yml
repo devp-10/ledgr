@@ -5,9 +5,9 @@ services:
     volumes:
       - ollama_data:/root/.ollama   # model weights persist across restarts
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      test: ["CMD", "ollama", "list"]
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 20
       start_period: 10s
 
