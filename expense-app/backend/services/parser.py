@@ -8,7 +8,8 @@ from services.database import compute_hash
 COLUMN_ALIASES = {
     "date": ["date", "transaction date", "trans date", "posting date", "value date", "trans. date"],
     "description": ["description", "memo", "narration", "details", "payee", "merchant", "transaction", "particulars", "reference"],
-    "amount": ["amount", "value", "net amount", "transaction amount"],
+    "amount": ["amount", "value", "net amount", "transaction amount",
+               "amount (usd)", "amount (cad)", "amount (eur)", "amount (gbp)"],
     "debit": ["debit", "withdrawal", "debit amount", "dr", "withdrawals"],
     "credit": ["credit", "deposit", "credit amount", "cr", "deposits"],
 }
