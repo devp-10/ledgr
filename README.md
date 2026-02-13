@@ -37,20 +37,6 @@ docker compose down
 docker compose down -v
 ```
 
-#### GPU acceleration (optional)
-
-If you have an NVIDIA GPU and [nvidia-container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed, add this block to the `ollama` service in `docker-compose.yml` for faster categorization:
-
-```yaml
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-```
-
 ---
 
 ### Option B — Run locally (requires Python, Node, Ollama installed)
