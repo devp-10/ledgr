@@ -1,3 +1,4 @@
+import os
 import httpx
 import json
 import re
@@ -7,7 +8,8 @@ from models import VALID_CATEGORIES
 from services.database import get_connection
 
 BATCH_SIZE = 20
-DEFAULT_OLLAMA_URL = "http://localhost:11434"
+# OLLAMA_URL env var is set to http://ollama:11434 in Docker Compose
+DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = "llama3.2"
 
 

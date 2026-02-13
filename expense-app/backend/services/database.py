@@ -1,9 +1,12 @@
+import os
 import sqlite3
 import hashlib
 from pathlib import Path
 from contextlib import contextmanager
 
-DB_PATH = Path(__file__).parent.parent.parent.parent / "data" / "expenses.db"
+# DB_PATH: use env var (Docker) or fall back to ../../data/expenses.db (local dev)
+_default = Path(__file__).parent.parent.parent.parent / "data" / "expenses.db"
+DB_PATH = Path(os.environ.get("DB_PATH", str(_default)))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS transactions (

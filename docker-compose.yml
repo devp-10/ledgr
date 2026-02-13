@@ -1,0 +1,50 @@
+services:
+  # ── Ollama (local LLM) ────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama   # model weights persist across restarts
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  # Pull llama3.2 on first run (cached in volume; subsequent starts are instant)
+  ollama-init:
+    image: curlimages/curl:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    command: >
+      sh -c "echo '>>> Pulling llama3.2 (only downloads once, ~2 GB)...' &&
+             curl -sf -X POST http://ollama:11434/api/pull
+             -H 'Content-Type: application/json'
+             -d '{\"name\":\"llama3.2\",\"stream\":false}' &&
+             echo '>>> Model ready.'"
+    restart: "no"
+
+  # ── FastAPI backend ───────────────────────────────────────────────────────
+  backend:
+    build: ./expense-app/backend
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - DB_PATH=/data/expenses.db
+    volumes:
+      - db_data:/data              # SQLite database persists here
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  # ── React frontend (built + served by nginx) ──────────────────────────────
+  frontend:
+    build: ./expense-app/frontend
+    ports:
+      - "3000:80"                  # open http://localhost:3000
+    depends_on:
+      - backend
+
+volumes:
+  ollama_data:   # llama3.2 model weights (~2 GB, downloaded once)
+  db_data:       # SQLite database
