@@ -56,7 +56,7 @@ async def import_transactions(request: ImportRequest, background_tasks: Backgrou
     to_insert = [t for t in request.transactions if t.hash not in existing]
     skipped = len(request.transactions) - len(to_insert)
 
-    inserted_ids = []
+    inserted_pairs: list = []  # (row_id, description)
     with get_connection() as conn:
         for t in to_insert:
             cursor = conn.execute(
@@ -65,19 +65,20 @@ async def import_transactions(request: ImportRequest, background_tasks: Backgrou
                 (t.hash, t.date, t.description, t.amount, request.source_file),
             )
             if cursor.lastrowid:
-                inserted_ids.append(cursor.lastrowid)
+                inserted_pairs.append((cursor.lastrowid, t.description))
 
     job_id = None
-    if inserted_ids:
+    if inserted_pairs:
+        inserted_ids   = [p[0] for p in inserted_pairs]
+        inserted_descs = [p[1] for p in inserted_pairs]
         job_id = str(inserted_ids[0])
-        descriptions = [t.description for t in to_insert]
-        background_tasks.add_task(_run_categorization, job_id, inserted_ids, descriptions)
+        background_tasks.add_task(_run_categorization, job_id, inserted_ids, inserted_descs)
         cat_status = "pending"
     else:
         cat_status = "complete"
 
     return ImportResponse(
-        imported=len(inserted_ids),
+        imported=len(inserted_pairs),
         skipped_duplicates=skipped,
         categorization_status=cat_status,
         job_id=job_id,
@@ -120,6 +121,19 @@ def bulk_update(request: BulkUpdateRequest):
             [request.category] + request.ids,
         )
     return {"updated": len(request.ids)}
+
+
+@router.post("/transactions/recategorize")
+async def recategorize_all(background_tasks: BackgroundTasks):
+    with get_connection() as conn:
+        rows = conn.execute("SELECT id, description FROM transactions ORDER BY id").fetchall()
+    if not rows:
+        return {"job_id": None, "total": 0}
+    ids   = [r["id"] for r in rows]
+    descs = [r["description"] for r in rows]
+    job_id = f"recategorize-{ids[0]}"
+    background_tasks.add_task(_run_categorization, job_id, ids, descs)
+    return {"job_id": job_id, "total": len(ids)}
 
 
 @router.get("/transactions", response_model=PaginatedTransactions)

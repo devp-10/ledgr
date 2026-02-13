@@ -83,6 +83,9 @@ export const api = {
       body: JSON.stringify(settings),
     }),
 
+  recategorize: () =>
+    request<{ job_id: string | null; total: number }>('/transactions/recategorize', { method: 'POST' }),
+
   exportCsv: () =>
     fetch(`${BASE}/export`, { method: 'POST' }),
 

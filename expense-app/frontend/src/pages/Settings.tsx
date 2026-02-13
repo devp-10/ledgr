@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api, OllamaSettings, OllamaTestResult } from '../lib/api'
 import { useToastContext } from '../App'
 
@@ -21,6 +21,11 @@ export function Settings() {
   const [exporting, setExporting] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearing, setClearing] = useState(false)
+
+  const [recatStatus, setRecatStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle')
+  const [recatProgress, setRecatProgress] = useState({ completed: 0, total: 0 })
+  const [recatError, setRecatError] = useState('')
+  const recatPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     api.getOllamaSettings().then(s => setOllamaSettings(s))
@@ -67,6 +72,41 @@ export function Settings() {
       addToast(e instanceof Error ? e.message : 'Failed to add category', 'error')
     } finally {
       setAddingCat(false)
+    }
+  }
+
+  const handleRecategorize = async () => {
+    setRecatStatus('running')
+    setRecatProgress({ completed: 0, total: 0 })
+    setRecatError('')
+    try {
+      const result = await api.recategorize()
+      if (!result.job_id) {
+        setRecatStatus('done')
+        return
+      }
+      setRecatProgress(p => ({ ...p, total: result.total }))
+      recatPollRef.current = setInterval(async () => {
+        try {
+          const status = await api.getCategorizationStatus(result.job_id!)
+          setRecatProgress({ completed: status.completed, total: status.total })
+          if (status.status === 'done') {
+            clearInterval(recatPollRef.current!)
+            setRecatStatus('done')
+          } else if (status.status.startsWith('error')) {
+            clearInterval(recatPollRef.current!)
+            setRecatStatus('error')
+            setRecatError(status.status.replace(/^error:\s*/, ''))
+          }
+        } catch {
+          clearInterval(recatPollRef.current!)
+          setRecatStatus('error')
+          setRecatError('Lost connection to backend')
+        }
+      }, 2000)
+    } catch (e: unknown) {
+      setRecatStatus('error')
+      setRecatError(e instanceof Error ? e.message : 'Failed to start re-categorization')
     }
   }
 
@@ -223,7 +263,14 @@ export function Settings() {
           Export your data or clear all transactions.
         </p>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleRecategorize}
+            disabled={recatStatus === 'running'}
+            className="px-4 py-2 border border-blue-200 dark:border-blue-800 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+          >
+            {recatStatus === 'running' ? 'Re-categorizing...' : 'Re-categorize all with Ollama'}
+          </button>
           <button
             onClick={handleExport}
             disabled={exporting}
@@ -238,6 +285,33 @@ export function Settings() {
             Clear all data
           </button>
         </div>
+
+        {recatStatus === 'running' && (
+          <div className="mt-4">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span>Categorizing with Ollama...</span>
+              <span>{recatProgress.completed} / {recatProgress.total}</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: recatProgress.total ? `${(recatProgress.completed / recatProgress.total) * 100}%` : '0%' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {recatStatus === 'done' && (
+          <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">
+            Done — all transactions have been re-categorized.
+          </p>
+        )}
+
+        {recatStatus === 'error' && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+            Error: {recatError}
+          </p>
+        )}
 
         {showClearConfirm && (
           <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
