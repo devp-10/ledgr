@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api, ParsedTransaction, UploadPreviewResponse, ImportResponse } from '../lib/api'
 import { FileUpload } from '../components/FileUpload'
 import { useToastContext } from '../App'
+import { POLL_INTERVAL_MS } from '../constants'
 
 type Stage = 'idle' | 'parsing' | 'preview' | 'importing' | 'categorizing' | 'done'
 
@@ -73,7 +74,7 @@ export function Upload() {
             if (pollRef.current) clearInterval(pollRef.current)
             setStage('done')
           }
-        }, 2000)
+        }, POLL_INTERVAL_MS)
       } else {
         setStage('done')
         addToast(`Imported ${result.imported} transactions`, 'success')

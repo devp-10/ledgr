@@ -1,6 +1,7 @@
 from collections import defaultdict
 from fastapi import APIRouter, Path
 
+import config
 from models import MonthlyReport, Transaction
 from services.database import get_connection
 
@@ -42,9 +43,9 @@ def get_monthly_report(month: str = Path(...)):
         ).fetchall()
 
         top_rows = conn.execute(
-            """SELECT * FROM transactions
+            f"""SELECT * FROM transactions
                WHERE date >= ? AND date < ? AND amount < 0
-               ORDER BY amount ASC LIMIT 10""",
+               ORDER BY amount ASC LIMIT {config.TOP_EXPENSES_LIMIT}""",
             (month_start, month_end),
         ).fetchall()
 

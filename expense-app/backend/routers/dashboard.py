@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query
 from datetime import date
 
+import config
 from models import DashboardSummary, Transaction
 from services.database import get_connection
 
@@ -67,9 +68,9 @@ def get_dashboard(month: str = Query(None)):
             for r in cat_rows
         ]
 
-        # Monthly trend: last 6 months
+        # Monthly trend: last MONTHLY_TREND_MONTHS months
         trend = []
-        for i in range(5, -1, -1):
+        for i in range(config.MONTHLY_TREND_MONTHS - 1, -1, -1):
             t_year, t_mon = year, mon - i
             while t_mon <= 0:
                 t_mon += 12
@@ -87,9 +88,9 @@ def get_dashboard(month: str = Query(None)):
                 "income": round(sum(a for a in t_amounts if a > 0), 2),
             })
 
-        # Recent 10 transactions (across all time)
+        # Recent transactions (across all time)
         recent_rows = conn.execute(
-            "SELECT * FROM transactions ORDER BY date DESC, imported_at DESC LIMIT 10"
+            f"SELECT * FROM transactions ORDER BY date DESC, imported_at DESC LIMIT {config.RECENT_TRANSACTIONS_LIMIT}"
         ).fetchall()
 
     recent_txns = [Transaction(**dict(r)) for r in recent_rows]
