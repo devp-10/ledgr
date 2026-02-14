@@ -53,7 +53,7 @@ export function Plan() {
       {/* Month selector */}
       <div className="flex items-center justify-between">
         <MonthPicker value={month} onChange={setMonth} />
-        <p className="text-xs text-gray-400 dark:text-gray-500">
+        <p className="text-xs text-white/25">
           Budget targets are stored locally
         </p>
       </div>
@@ -67,7 +67,7 @@ export function Plan() {
 
       {/* Section header */}
       <div className="flex items-center justify-between mt-2">
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        <h2 className="text-xs font-semibold text-white/30 uppercase tracking-widest">
           Category Groups
         </h2>
       </div>
@@ -101,7 +101,7 @@ export function Plan() {
               onChange={e => setAddGroupName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleAddGroup(); if (e.key === 'Escape') setShowAddGroup(false) }}
               placeholder="Group name..."
-              className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400"
+              className="flex-1 input-dark text-sm px-3 py-2"
             />
             <Button variant="primary" size="sm" onClick={handleAddGroup}>Add</Button>
             <Button variant="ghost" size="sm" onClick={() => setShowAddGroup(false)}>Cancel</Button>

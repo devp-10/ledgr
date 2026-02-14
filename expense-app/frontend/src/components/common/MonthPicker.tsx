@@ -22,17 +22,17 @@ export function MonthPicker({ value, onChange, maxDate }: MonthPickerProps) {
     <div className="flex items-center gap-1">
       <button
         onClick={prev}
-        className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/05 transition-colors"
       >
         <ChevronLeft size={16} />
       </button>
-      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 min-w-[120px] text-center">
+      <span className="text-sm font-semibold gradient-text min-w-[120px] text-center">
         {format(date, 'MMMM yyyy')}
       </span>
       <button
         onClick={next}
         disabled={isAtMax}
-        className="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/05 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       >
         <ChevronRight size={16} />
       </button>
