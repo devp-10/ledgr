@@ -3,21 +3,18 @@ from fastapi import APIRouter
 from models import OllamaSettings, OllamaTestResult
 from services.database import get_connection
 from services import categorizer
+from services.settings_service import get_ollama_settings
+
 
 router = APIRouter()
 
 
 @router.get("/settings/ollama", response_model=OllamaSettings)
-def get_ollama_settings():
-    with get_connection() as conn:
-        url_row = conn.execute("SELECT value FROM settings WHERE key='ollama_url'").fetchone()
-        model_row = conn.execute("SELECT value FROM settings WHERE key='ollama_model'").fetchone()
-    # Env var (set by Docker Compose) always takes precedence over any saved DB value
-    url = categorizer.DEFAULT_OLLAMA_URL or (url_row["value"] if url_row else "http://localhost:11434")
-    return OllamaSettings(
-        url=url,
-        model=model_row["value"] if model_row else categorizer.DEFAULT_MODEL,
-    )
+def get_ollama_settings_endpoint():
+    # Use the single authoritative resolver — same function the categorizer uses,
+    # so the UI always reflects exactly what recategorization will connect to.
+    url, model = get_ollama_settings()
+    return OllamaSettings(url=url, model=model)
 
 
 @router.post("/settings/ollama")

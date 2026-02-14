@@ -105,7 +105,7 @@ class MonthlyReport(BaseModel):
 
 
 class OllamaSettings(BaseModel):
-    url: str = "http://localhost:11434"
+    url: str = ""
     model: str = ""
 
 

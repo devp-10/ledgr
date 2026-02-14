@@ -1,25 +1,11 @@
-import os
 import httpx
 import json
 import re
 from typing import List, Optional, Callable, Awaitable
 
+import config
 from models import VALID_CATEGORIES
-from services.database import get_connection
-
-BATCH_SIZE = 5
-# OLLAMA_URL env var is set to http://ollama:11434 in Docker Compose
-DEFAULT_OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
-DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "")
-
-
-def get_ollama_settings():
-    with get_connection() as conn:
-        url_row = conn.execute("SELECT value FROM settings WHERE key='ollama_url'").fetchone()
-        model_row = conn.execute("SELECT value FROM settings WHERE key='ollama_model'").fetchone()
-    url = url_row["value"] if url_row else DEFAULT_OLLAMA_URL
-    model = model_row["value"] if model_row else DEFAULT_MODEL
-    return url, model
+from services.settings_service import get_ollama_settings
 
 
 def build_prompt(descriptions: List[str]) -> str:
@@ -52,7 +38,7 @@ async def categorize_batch(
     response = await client.post(
         f"{url}/api/generate",
         json={"model": model, "prompt": prompt, "stream": False},
-        timeout=180.0,
+        timeout=config.CATEGORIZE_TIMEOUT,
     )
     response.raise_for_status()
     raw = response.json()["response"].strip()
@@ -78,12 +64,13 @@ async def categorize_transactions(
     completed = 0
 
     async with httpx.AsyncClient() as client:
-        for i in range(0, total, BATCH_SIZE):
-            batch_ids = transaction_ids[i : i + BATCH_SIZE]
-            batch_descs = descriptions[i : i + BATCH_SIZE]
+        for i in range(0, total, config.BATCH_SIZE):
+            batch_ids = transaction_ids[i : i + config.BATCH_SIZE]
+            batch_descs = descriptions[i : i + config.BATCH_SIZE]
 
             categories = await categorize_batch(batch_descs, client, url, model)
 
+            from services.database import get_connection
             with get_connection() as conn:
                 for tid, cat in zip(batch_ids, categories):
                     conn.execute(
@@ -101,7 +88,7 @@ async def categorize_transactions(
 async def test_connection(url: str, model: str) -> dict:
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(f"{url}/api/tags", timeout=5.0)
+            resp = await client.get(f"{url}/api/tags", timeout=config.TEST_TIMEOUT)
             resp.raise_for_status()
             data = resp.json()
             models = [m["name"] for m in data.get("models", [])]

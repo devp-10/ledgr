@@ -6,7 +6,7 @@ A single-user expense tracking web app that analyzes bank statements using a loc
 
 - **Backend**: FastAPI + SQLite
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS + Recharts
-- **AI**: Ollama (local, default model `llama3.2`)
+- **AI**: Ollama (local, default model `mistral`)
 
 ---
 
@@ -24,7 +24,7 @@ Then open **http://localhost:3000**.
 
 That's it. Docker handles Python, Node.js, and Ollama — nothing else needs to be installed.
 
-> **First run** downloads `llama3.2` (~2 GB) and builds the images — takes a few minutes.
+> **First run** downloads `mistral` (~4 GB) and builds the images — takes a few minutes.
 > Subsequent `docker compose up` starts in seconds; the model and database are cached in Docker volumes.
 
 **Stop the app:**
@@ -49,7 +49,7 @@ docker compose down -v
 ```bash
 # Terminal 1 — Ollama
 ollama serve
-ollama pull llama3.2
+ollama pull mistral
 
 # Terminal 2 — Backend
 cd expense-app/backend
@@ -73,7 +73,7 @@ Open http://localhost:5173
 | Feature | Description |
 |---------|-------------|
 | **Upload** | Drag-and-drop CSV or Excel bank statements. Auto-detects columns (date, description, amount, or debit/credit split). Previews rows before import. Deduplicates automatically. |
-| **AI Categorization** | Transactions are categorized by Ollama in batches of 20. Progress bar shows status. Falls back gracefully if Ollama is unavailable. |
+| **AI Categorization** | Transactions are categorized by Ollama in batches of 5. Progress bar shows status. Falls back gracefully if Ollama is unavailable. |
 | **Dashboard** | Summary cards (spending, income, net cash flow, count), spending donut chart, 6-month trend line, recent transactions. Month selector. |
 | **Transactions** | Full list with search, filters (category, date range, amount range), sortable columns, pagination. Click any category badge to edit inline. Bulk re-categorize. |
 | **Reports** | Category breakdown with % of total and month-over-month % change. Top 10 expenses. Printable layout (`Print` button hides nav). |
