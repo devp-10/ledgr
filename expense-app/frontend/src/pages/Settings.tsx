@@ -1,360 +1,260 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { CheckCircle2, XCircle, RefreshCw, Download, Trash2, Database } from 'lucide-react'
 import { api, OllamaSettings, OllamaTestResult } from '../lib/api'
+import { Card, CardHeader, CardContent, CardTitle } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 import { useToastContext } from '../App'
-import { POLL_INTERVAL_MS } from '../constants'
+
+const OLLAMA_MODELS = ['llama3.2', 'llama3.1', 'mistral', 'phi3', 'gemma2']
 
 export function Settings() {
   const addToast = useToastContext()
-
-  const [ollamaSettings, setOllamaSettings] = useState<OllamaSettings>({
-    url: 'http://localhost:11434',
-    model: '',
-  })
+  const [settings, setSettings] = useState<OllamaSettings>({ url: '', model: 'llama3.2' })
   const [testResult, setTestResult] = useState<OllamaTestResult | null>(null)
   const [testing, setTesting] = useState(false)
   const [saving, setSaving] = useState(false)
-
-  const [categories, setCategories] = useState<string[]>([])
-  const [customCategories, setCustomCategories] = useState<string[]>([])
-  const [newCategory, setNewCategory] = useState('')
-  const [addingCat, setAddingCat] = useState(false)
-
-  const [exporting, setExporting] = useState(false)
-  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [recategorizing, setRecategorizing] = useState(false)
   const [clearing, setClearing] = useState(false)
-
-  const [recatStatus, setRecatStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle')
-  const [recatProgress, setRecatProgress] = useState({ completed: 0, total: 0 })
-  const [recatError, setRecatError] = useState('')
-  const recatPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [confirmClear, setConfirmClear] = useState(false)
 
   useEffect(() => {
-    api.getOllamaSettings().then(s => setOllamaSettings(s))
-    api.getCategories().then(r => {
-      setCategories(r.categories)
-      setCustomCategories(r.custom)
-    })
+    api.getOllamaSettings().then(setSettings).catch(() => {})
   }, [])
 
-  const handleTestConnection = async () => {
-    setTesting(true)
-    setTestResult(null)
-    try {
-      const result = await api.testOllama(ollamaSettings)
-      setTestResult(result)
-    } finally {
-      setTesting(false)
-    }
-  }
-
-  const handleSaveOllama = async () => {
+  const handleSave = async () => {
     setSaving(true)
     try {
-      await api.saveOllamaSettings(ollamaSettings)
-      addToast('Ollama settings saved', 'success')
-    } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Failed to save settings', 'error')
+      await api.saveOllamaSettings(settings)
+      addToast('Settings saved', 'success')
+    } catch {
+      addToast('Failed to save settings', 'error')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleAddCategory = async () => {
-    if (!newCategory.trim()) return
-    setAddingCat(true)
+  const handleTest = async () => {
+    setTesting(true)
+    setTestResult(null)
     try {
-      await api.addCategory(newCategory.trim())
-      const r = await api.getCategories()
-      setCategories(r.categories)
-      setCustomCategories(r.custom)
-      setNewCategory('')
-      addToast(`Category "${newCategory.trim()}" added`, 'success')
-    } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Failed to add category', 'error')
+      const result = await api.testOllama(settings)
+      setTestResult(result)
+    } catch {
+      setTestResult({ connected: false, message: 'Connection failed', available_models: null })
     } finally {
-      setAddingCat(false)
+      setTesting(false)
     }
   }
 
   const handleRecategorize = async () => {
-    setRecatStatus('running')
-    setRecatProgress({ completed: 0, total: 0 })
-    setRecatError('')
+    setRecategorizing(true)
     try {
       const result = await api.recategorize()
-      if (!result.job_id) {
-        setRecatStatus('done')
-        return
-      }
-      setRecatProgress(p => ({ ...p, total: result.total }))
-      recatPollRef.current = setInterval(async () => {
-        try {
-          const status = await api.getCategorizationStatus(result.job_id!)
-          setRecatProgress({ completed: status.completed, total: status.total })
-          if (status.status === 'done') {
-            clearInterval(recatPollRef.current!)
-            setRecatStatus('done')
-          } else if (status.status.startsWith('error')) {
-            clearInterval(recatPollRef.current!)
-            setRecatStatus('error')
-            setRecatError(status.status.replace(/^error:\s*/, ''))
-          }
-        } catch {
-          clearInterval(recatPollRef.current!)
-          setRecatStatus('error')
-          setRecatError('Lost connection to backend')
-        }
-      }, POLL_INTERVAL_MS)
-    } catch (e: unknown) {
-      setRecatStatus('error')
-      setRecatError(e instanceof Error ? e.message : 'Failed to start re-categorization')
+      addToast(`Recategorizing ${result.total} transactions...`, 'info')
+    } catch {
+      addToast('Failed to start recategorization', 'error')
+    } finally {
+      setRecategorizing(false)
     }
   }
 
   const handleExport = async () => {
-    setExporting(true)
     try {
-      const response = await api.exportCsv()
-      if (!response.ok) throw new Error('Export failed')
-      const blob = await response.blob()
+      const res = await api.exportCsv()
+      const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'transactions.csv'
+      a.download = `ledgr-export-${new Date().toISOString().slice(0, 10)}.csv`
       a.click()
       URL.revokeObjectURL(url)
-      addToast('Data exported successfully', 'success')
-    } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Export failed', 'error')
-    } finally {
-      setExporting(false)
+      addToast('Export downloaded', 'success')
+    } catch {
+      addToast('Export failed', 'error')
     }
   }
 
-  const handleClearData = async () => {
+  const handleClear = async () => {
+    if (!confirmClear) { setConfirmClear(true); return }
     setClearing(true)
     try {
       await api.clearData()
-      addToast('All data cleared', 'success')
-      setShowClearConfirm(false)
-    } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Failed to clear data', 'error')
+      addToast('All data cleared', 'info')
+      setConfirmClear(false)
+    } catch {
+      addToast('Failed to clear data', 'error')
     } finally {
       setClearing(false)
     }
   }
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+    <div className="max-w-2xl space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your Ledgr preferences</p>
+      </div>
 
-      {/* Ollama configuration */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Ollama Configuration</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-          Configure the local Ollama instance used for transaction categorization.
-        </p>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Ollama URL
-            </label>
-            <input
-              type="text"
-              value={ollamaSettings.url}
-              onChange={e => setOllamaSettings(s => ({ ...s, url: e.target.value }))}
+      {/* AI Categorization */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Categorization</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Input
+              label="Ollama URL"
+              value={settings.url}
+              onChange={e => setSettings(s => ({ ...s, url: e.target.value }))}
               placeholder="http://localhost:11434"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Model
-            </label>
-            <input
-              type="text"
-              value={ollamaSettings.model}
-              onChange={e => setOllamaSettings(s => ({ ...s, model: e.target.value }))}
-              placeholder="llama3.2"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
 
-          {testResult && (
-            <div className={`p-3 rounded-lg text-sm ${
-              testResult.connected
-                ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300'
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300'
-            }`}>
-              <span className="font-medium">{testResult.connected ? '✓' : '✕'} </span>
-              {testResult.message}
-              {testResult.available_models && testResult.available_models.length > 0 && (
-                <div className="mt-1 text-xs opacity-70">
-                  Available models: {testResult.available_models.join(', ')}
+            <div>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Model</label>
+              <select
+                value={settings.model}
+                onChange={e => setSettings(s => ({ ...s, model: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              >
+                {OLLAMA_MODELS.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" size="sm" loading={testing} onClick={handleTest}>
+                Test Connection
+              </Button>
+              <Button variant="primary" size="sm" loading={saving} onClick={handleSave}>
+                Save Settings
+              </Button>
+            </div>
+
+            {testResult && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+                testResult.connected
+                  ? 'bg-success-500/10 text-success-700 dark:text-success-400'
+                  : 'bg-danger-500/10 text-danger-700 dark:text-danger-400'
+              }`}>
+                {testResult.connected
+                  ? <CheckCircle2 size={16} className="flex-shrink-0" />
+                  : <XCircle size={16} className="flex-shrink-0" />
+                }
+                <span>{testResult.message}</span>
+                {testResult.available_models && testResult.available_models.length > 0 && (
+                  <span className="ml-auto text-xs opacity-70">
+                    {testResult.available_models.length} model{testResult.available_models.length !== 1 ? 's' : ''} available
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={recategorizing}
+                onClick={handleRecategorize}
+              >
+                <RefreshCw size={14} />
+                Re-categorize All Transactions
+              </Button>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                Uses the selected AI model to re-categorize all existing transactions.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Appearance */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Dark Mode</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Toggle via the moon/sun icon in the header</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" size="sm" onClick={handleExport}>
+                <Download size={14} />
+                Export All Transactions (CSV)
+              </Button>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-3">
+              {confirmClear ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-danger-600 dark:text-danger-400 font-medium">
+                    ⚠️ This will permanently delete all transactions. Are you sure?
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      loading={clearing}
+                      onClick={handleClear}
+                    >
+                      <Trash2 size={14} />
+                      Yes, clear all data
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setConfirmClear(false)}>
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClear}
+                  className="text-danger-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                >
+                  <Trash2 size={14} />
+                  Clear All Data
+                </Button>
               )}
             </div>
-          )}
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleTestConnection}
-              disabled={testing}
-              className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              {testing ? 'Testing...' : 'Test connection'}
-            </button>
-            <button
-              onClick={handleSaveOllama}
-              disabled={saving}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save'}
-            </button>
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
-      {/* Custom categories */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Custom Categories</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-          Add categories beyond the built-in set.
-        </p>
-
-        {customCategories.length > 0 ? (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {customCategories.map(c => (
-              <span
-                key={c}
-                className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm"
-              >
-                {c}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">No custom categories yet.</p>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="New category name"
-            value={newCategory}
-            onChange={e => setNewCategory(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAddCategory()}
-            className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleAddCategory}
-            disabled={addingCat || !newCategory.trim()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Add
-          </button>
-        </div>
-      </section>
-
-      {/* Data management */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Data Management</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-          Export your data or clear all transactions.
-        </p>
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleRecategorize}
-            disabled={recatStatus === 'running'}
-            className="px-4 py-2 border border-blue-200 dark:border-blue-800 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
-          >
-            {recatStatus === 'running' ? 'Re-categorizing...' : 'Re-categorize all with Ollama'}
-          </button>
-          <button
-            onClick={handleExport}
-            disabled={exporting}
-            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-          >
-            {exporting ? 'Exporting...' : 'Export all data as CSV'}
-          </button>
-          <button
-            onClick={() => setShowClearConfirm(true)}
-            className="px-4 py-2 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-          >
-            Clear all data
-          </button>
-        </div>
-
-        {recatStatus === 'running' && (
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Categorizing with Ollama...</span>
-              <span>{recatProgress.completed} / {recatProgress.total}</span>
+      {/* About */}
+      <Card>
+        <CardHeader>
+          <CardTitle>About</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2">
+              <Database size={14} className="text-primary-500" />
+              <span>Ledgr v1.0.0 — Local-first expense tracker with AI categorization</span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: recatProgress.total ? `${(recatProgress.completed / recatProgress.total) * 100}%` : '0%' }}
-              />
-            </div>
+            {testResult?.connected && (
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-success-500" />
+                <span>Ollama: Connected ({settings.model})</span>
+              </div>
+            )}
           </div>
-        )}
-
-        {recatStatus === 'done' && (
-          <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">
-            Done — all transactions have been re-categorized.
-          </p>
-        )}
-
-        {recatStatus === 'error' && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-            Error: {recatError}
-          </p>
-        )}
-
-        {showClearConfirm && (
-          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-            <p className="text-sm font-medium text-red-700 dark:text-red-300 mb-3">
-              Are you sure? This will permanently delete all transactions and categories. This cannot be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleClearData}
-                disabled={clearing}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                {clearing ? 'Clearing...' : 'Yes, clear everything'}
-              </button>
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="px-4 py-2 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Built-in categories reference */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Built-in Categories</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          These categories are used by Ollama for automatic classification.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {categories.filter(c => !customCategories.includes(c)).map(c => (
-            <span
-              key={c}
-              className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs"
-            >
-              {c}
-            </span>
-          ))}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   )
 }

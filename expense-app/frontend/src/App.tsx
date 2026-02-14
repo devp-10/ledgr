@@ -1,10 +1,9 @@
 import { createContext, useContext } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Layout } from './components/Layout'
-import { Dashboard } from './pages/Dashboard'
-import { Transactions } from './pages/Transactions'
-import { Reports } from './pages/Reports'
-import { Upload } from './pages/Upload'
+import { Layout } from './components/layout/Layout'
+import { Plan } from './pages/Plan'
+import { Reflect } from './pages/Reflect'
+import { Ledger } from './pages/Ledger'
 import { Settings } from './pages/Settings'
 import { ToastContainer } from './components/Toast'
 import { useToast } from './hooks/useToast'
@@ -22,10 +21,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="upload" element={<Upload />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="reports" element={<Reports />} />
+            <Route index element={<Plan />} />
+            <Route path="reflect" element={<Reflect />} />
+            <Route path="ledger" element={<Ledger />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
