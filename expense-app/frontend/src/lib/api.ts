@@ -93,7 +93,7 @@ export const api = {
     request<{ message: string }>('/data', { method: 'DELETE' }),
 }
 
-// TypeScript interfaces
+// ─── API Type Definitions ─────────────────────────────────────────────────────
 
 export interface Transaction {
   id: number
@@ -119,6 +119,7 @@ export interface UploadPreviewResponse {
   total_rows: number
   duplicate_count: number
   columns_detected: Record<string, string>
+  source_file?: string
 }
 
 export interface ImportRequest {
