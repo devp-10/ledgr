@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { api, OllamaSettings, OllamaTestResult } from '../lib/api'
 import { useToastContext } from '../App'
+import { POLL_INTERVAL_MS } from '../constants'
 
 export function Settings() {
   const addToast = useToastContext()
@@ -103,7 +104,7 @@ export function Settings() {
           setRecatStatus('error')
           setRecatError('Lost connection to backend')
         }
-      }, 2000)
+      }, POLL_INTERVAL_MS)
     } catch (e: unknown) {
       setRecatStatus('error')
       setRecatError(e instanceof Error ? e.message : 'Failed to start re-categorization')
