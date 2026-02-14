@@ -15,8 +15,8 @@ function formatMoney(n: number) {
 
 export function ComparisonTable({ current, previous, loading }: ComparisonTableProps) {
   if (loading) return (
-    <div className="animate-pulse space-y-3">
-      {[1,2,3,4,5].map(i => <div key={i} className="h-8 bg-gray-100 dark:bg-gray-700 rounded" />)}
+    <div className="space-y-3">
+      {[1,2,3,4,5].map(i => <div key={i} className="h-8 skeleton" />)}
     </div>
   )
 
@@ -34,7 +34,7 @@ export function ComparisonTable({ current, previous, loading }: ComparisonTableP
     .sort((a, b) => b.currAbs - a.currAbs)
 
   if (!rows.length) return (
-    <p className="text-sm text-gray-400 text-center py-8">No comparison data available</p>
+    <p className="text-sm text-white/30 text-center py-8">No comparison data available</p>
   )
 
   const maxVal = Math.max(...rows.flatMap(r => [r.currAbs, r.prevAbs]))
@@ -45,18 +45,24 @@ export function ComparisonTable({ current, previous, loading }: ComparisonTableP
         <div key={cat} className="space-y-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getCategoryDotColor(cat) }} />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{cat}</span>
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: getCategoryDotColor(cat),
+                  boxShadow: `0 0 6px ${getCategoryDotColor(cat)}60`
+                }}
+              />
+              <span className="text-sm font-medium text-white/70">{cat}</span>
             </div>
             <div className="flex items-center gap-2">
               {delta !== 0 && (
                 <span className={clsx(
                   'text-xs font-medium flex items-center gap-0.5',
-                  delta > 0 ? 'text-danger-500' : 'text-success-500'
+                  delta > 0 ? 'text-red-400' : 'text-emerald-400'
                 )}>
                   {delta > 0
                     ? <><ArrowUpRight size={12} />+{Math.abs(Math.round(delta))}%</>
-                    : <><ArrowDownRight size={12} />-{Math.abs(Math.round(delta))}% 🎉</>
+                    : <><ArrowDownRight size={12} />-{Math.abs(Math.round(delta))}%</>
                   }
                 </span>
               )}
@@ -65,27 +71,27 @@ export function ComparisonTable({ current, previous, loading }: ComparisonTableP
 
           {/* This month bar */}
           <div className="flex items-center gap-2">
-            <span className="w-24 text-xs text-gray-500 dark:text-gray-400 text-right">{formatMoney(currAbs)}</span>
-            <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+            <span className="w-20 text-xs font-money text-white/50 text-right">{formatMoney(currAbs)}</span>
+            <div className="flex-1 h-1 progress-track overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary-500 to-accent-500 transition-all duration-700"
+                className="progress-neon"
                 style={{ width: `${maxVal ? (currAbs / maxVal) * 100 : 0}%` }}
               />
             </div>
-            <span className="w-20 text-xs text-gray-400 dark:text-gray-500">This month</span>
+            <span className="w-20 text-xs text-white/25">This month</span>
           </div>
 
           {/* Last month bar */}
           {prevAbs > 0 && (
             <div className="flex items-center gap-2">
-              <span className="w-24 text-xs text-gray-400 dark:text-gray-500 text-right">{formatMoney(prevAbs)}</span>
-              <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+              <span className="w-20 text-xs font-money text-white/30 text-right">{formatMoney(prevAbs)}</span>
+              <div className="flex-1 h-1 progress-track overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gray-300 dark:bg-gray-600 transition-all duration-700"
+                  className="h-full rounded-full bg-white/15 transition-all duration-700"
                   style={{ width: `${maxVal ? (prevAbs / maxVal) * 100 : 0}%` }}
                 />
               </div>
-              <span className="w-20 text-xs text-gray-400 dark:text-gray-500">Last month</span>
+              <span className="w-20 text-xs text-white/25">Last month</span>
             </div>
           )}
         </div>

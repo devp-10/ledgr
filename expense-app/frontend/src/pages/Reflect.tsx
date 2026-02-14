@@ -15,8 +15,8 @@ import { useToastContext } from '../App'
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3 my-6">
-      <h2 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{title}</h2>
-      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">{title}</h2>
+      <div className="flex-1 section-divider" />
     </div>
   )
 }
@@ -48,7 +48,7 @@ export function Reflect() {
       {/* Period selector */}
       <div className="flex items-center justify-between mb-6">
         <MonthPicker value={month} onChange={setMonth} />
-        <div className="text-xs text-gray-400 dark:text-gray-500">
+        <div className="text-xs text-white/25">
           Comparing to previous month
         </div>
       </div>
@@ -77,7 +77,7 @@ export function Reflect() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="h-48 animate-pulse bg-gray-100 dark:bg-gray-700 rounded-lg" />
+              <div className="h-48 skeleton" />
             ) : (
               <CategoryDonut
                 data={current?.spending_by_category ?? []}
@@ -135,7 +135,7 @@ export function Reflect() {
         <CardContent>
           <TrendLine data={current?.monthly_trend ?? []} targetRate={30} />
           {!loading && current && (
-            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/06">
               {[
                 {
                   label: 'This Month',
@@ -154,8 +154,8 @@ export function Reflect() {
                 },
               ].map(stat => (
                 <div key={stat.label} className="text-center">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
-                  <p className="text-lg font-bold font-money text-gray-900 dark:text-gray-100 mt-0.5">{stat.value}</p>
+                  <p className="text-xs text-white/30">{stat.label}</p>
+                  <p className="text-lg font-bold font-money gradient-text mt-0.5">{stat.value}</p>
                 </div>
               ))}
             </div>

@@ -3,15 +3,15 @@ import { CheckCircle2, XCircle, Info, X } from 'lucide-react'
 import { Toast as ToastType, ToastType as TType } from '../hooks/useToast'
 
 const TYPE_STYLES: Record<TType, string> = {
-  success: 'bg-white dark:bg-gray-800 border-success-500/30 text-success-700 dark:text-success-400',
-  error: 'bg-white dark:bg-gray-800 border-danger-500/30 text-danger-700 dark:text-danger-400',
-  info: 'bg-white dark:bg-gray-800 border-accent-500/30 text-accent-700 dark:text-accent-400',
+  success: 'border-emerald-500/30',
+  error:   'border-red-500/30',
+  info:    'border-cyan-500/30',
 }
 
 const TYPE_ICONS: Record<TType, React.ReactNode> = {
-  success: <CheckCircle2 size={16} className="text-success-500 flex-shrink-0" />,
-  error: <XCircle size={16} className="text-danger-500 flex-shrink-0" />,
-  info: <Info size={16} className="text-accent-500 flex-shrink-0" />,
+  success: <CheckCircle2 size={16} className="text-emerald-400 flex-shrink-0" />,
+  error:   <XCircle size={16} className="text-red-400 flex-shrink-0" />,
+  info:    <Info size={16} className="text-cyan-400 flex-shrink-0" />,
 }
 
 interface Props {
@@ -26,16 +26,16 @@ export function ToastContainer({ toasts, onRemove }: Props) {
         <div
           key={t.id}
           className={clsx(
-            'flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium',
-            'min-w-[280px] max-w-sm pointer-events-auto animate-slide-in',
+            'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium',
+            'min-w-[280px] max-w-sm pointer-events-auto animate-slide-in glass border',
             TYPE_STYLES[t.type],
           )}
         >
           {TYPE_ICONS[t.type]}
-          <span className="flex-1 text-gray-800 dark:text-gray-200">{t.message}</span>
+          <span className="flex-1 text-white/80">{t.message}</span>
           <button
             onClick={() => onRemove(t.id)}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-1 transition-colors"
+            className="text-white/30 hover:text-white/60 ml-1 transition-colors"
           >
             <X size={14} />
           </button>

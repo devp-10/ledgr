@@ -9,9 +9,9 @@ const TABS = [
 
 export function TabNav() {
   return (
-    <div className="sticky top-14 z-30 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-screen-xl mx-auto px-6">
-        <nav className="flex items-center gap-0 -mb-px">
+    <div className="sticky top-14 z-30 glass border-b border-white/[0.06]">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-2">
+        <nav className="flex items-center gap-1">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
@@ -19,21 +19,14 @@ export function TabNav() {
               end={tab.end}
               className={({ isActive }) =>
                 clsx(
-                  'relative px-5 py-3.5 text-sm font-medium transition-all duration-200 select-none',
+                  'px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 select-none',
                   isActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'tab-pill-active'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/05 border border-transparent'
                 )
               }
             >
-              {({ isActive }) => (
-                <>
-                  {tab.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-gradient-to-r from-primary-500 to-accent-500" />
-                  )}
-                </>
-              )}
+              {tab.label}
             </NavLink>
           ))}
         </nav>

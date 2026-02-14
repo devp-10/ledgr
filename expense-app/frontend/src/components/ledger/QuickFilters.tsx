@@ -16,7 +16,7 @@ interface QuickFiltersProps {
 
 export function QuickFilters({ active, onChange }: QuickFiltersProps) {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5">
+    <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
       {FILTERS.map(f => (
         <button
           key={f.id}
@@ -24,8 +24,8 @@ export function QuickFilters({ active, onChange }: QuickFiltersProps) {
           className={clsx(
             'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150',
             active === f.id
-              ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-sm'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              ? 'tab-pill-active'
+              : 'text-white/40 hover:text-white/70 hover:bg-white/05 border border-transparent'
           )}
         >
           {f.label}

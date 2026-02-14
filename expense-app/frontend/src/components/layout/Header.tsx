@@ -7,14 +7,14 @@ export function Header() {
   const isSettings = location.pathname === '/settings'
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-screen-xl mx-auto px-6 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-40 glass border-b border-white/[0.06]">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-xs">L</span>
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-7 h-7 rounded-lg btn-glow flex items-center justify-center">
+            <span className="text-white font-bold text-xs tracking-tight">L</span>
           </div>
-          <span className="text-base font-bold gradient-text">Ledgr</span>
+          <span className="text-base font-bold gradient-text tracking-tight">ledgr</span>
         </Link>
 
         {/* Right actions */}
@@ -25,8 +25,8 @@ export function Header() {
             aria-label="Settings"
             className={`p-2 rounded-lg transition-all duration-150 active:scale-95 ${
               isSettings
-                ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'text-primary-400 bg-primary-500/10'
+                : 'text-white/40 hover:text-white/70 hover:bg-white/05'
             }`}
           >
             <Settings size={18} />

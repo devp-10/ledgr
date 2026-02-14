@@ -16,9 +16,9 @@ function formatMoney(n: number) {
 }
 
 function StatusIcon({ pct }: { pct: number }) {
-  if (pct >= 100) return <Circle size={12} className="text-danger-500 fill-danger-500" />
-  if (pct >= 80) return <AlertTriangle size={12} className="text-warning-500" />
-  return <Check size={12} className="text-success-500" />
+  if (pct >= 100) return <Circle size={10} className="text-red-400 fill-red-400" />
+  if (pct >= 80) return <AlertTriangle size={10} className="text-orange-400" />
+  return <Check size={10} className="text-emerald-400" />
 }
 
 export function CategoryRow({ category, spent, onEditBudget, onOpenModal }: CategoryRowProps) {
@@ -39,13 +39,13 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal }: Cate
   }
 
   return (
-    <div className="group flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors">
+    <div className="group flex items-center gap-3 py-2.5 px-3 rounded-xl hover:bg-white/03 transition-colors">
       {/* Emoji + name */}
       <div className="flex items-center gap-2 w-36 flex-shrink-0">
         <span className="text-sm">{category.emoji ?? '📦'}</span>
         <button
           onClick={() => onOpenModal(category.id)}
-          className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-left truncate"
+          className="text-sm font-medium text-white/70 hover:text-primary-400 transition-colors text-left truncate"
         >
           {category.name}
         </button>
@@ -61,32 +61,31 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal }: Cate
         <StatusIcon pct={pct} />
         <span className={clsx(
           'text-xs font-money',
-          pct >= 100 ? 'text-danger-500' : pct >= 80 ? 'text-warning-500' : 'text-gray-500 dark:text-gray-400'
+          pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-orange-400' : 'text-white/40'
         )}>
           {formatMoney(spent)}
         </span>
-        <span className="text-xs text-gray-400 dark:text-gray-600">/</span>
+        <span className="text-xs text-white/20">/</span>
 
-        {/* Editable budget amount */}
         {editing ? (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-400">$</span>
+            <span className="text-xs text-white/30">$</span>
             <input
               ref={inputRef}
               value={editVal}
               onChange={e => setEditVal(e.target.value)}
               onBlur={commitEdit}
               onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setEditing(false) }}
-              className="w-16 text-xs font-money bg-white dark:bg-gray-700 border border-primary-500 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-16 text-xs font-money input-dark px-1 py-0.5 rounded"
             />
           </div>
         ) : (
           <button
             onClick={() => { setEditVal(String(category.budgetAmount)); setEditing(true) }}
-            className="flex items-center gap-1 text-xs font-money text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 group/edit"
+            className="flex items-center gap-1 text-xs font-money text-white/50 hover:text-primary-400 group/edit transition-colors"
           >
             {formatMoney(category.budgetAmount)}
-            <Pencil size={10} className="opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+            <Pencil size={10} className="opacity-0 group-hover/edit:opacity-60 transition-opacity" />
           </button>
         )}
       </div>

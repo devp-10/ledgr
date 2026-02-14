@@ -7,18 +7,19 @@ import { format, parseISO } from 'date-fns'
 
 interface TrendLineProps {
   data: MonthTrend[]
-  targetRate?: number // optional savings rate target (0-100)
+  targetRate?: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload, label }: any) => {
+const DarkTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   const val = payload[0]?.value ?? 0
+  const isRate = payload[0]?.dataKey === 'savingsRate'
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-3 text-sm">
-      <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1">{label}</div>
-      <div className="font-money text-primary-600 dark:text-primary-400">
-        ${val.toLocaleString()}
+    <div className="chart-tooltip">
+      <div className="text-white/50 text-xs mb-1">{label}</div>
+      <div className="font-money text-white font-semibold gradient-text">
+        {isRate ? `${val}%` : `$${val >= 1000 ? (val/1000).toFixed(1)+'k' : val}`}
       </div>
     </div>
   )
@@ -26,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function TrendLine({ data, targetRate }: TrendLineProps) {
   if (!data.length) return (
-    <div className="flex items-center justify-center h-48 text-sm text-gray-400">No trend data</div>
+    <div className="flex items-center justify-center h-48 text-sm text-white/30">No trend data</div>
   )
 
   const formatted = data.map(d => ({
@@ -38,38 +39,64 @@ export function TrendLine({ data, targetRate }: TrendLineProps) {
 
   const useRate = targetRate !== undefined
   const dataKey = useRate ? 'savingsRate' : 'spending'
-  const strokeColor = '#8B5CF6'
 
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={formatted}>
+      <AreaChart data={formatted} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
         <defs>
-          <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={strokeColor} stopOpacity={0.2} />
-            <stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
+          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.35} />
+            <stop offset="60%" stopColor="#22D3EE" stopOpacity={0.1} />
+            <stop offset="100%" stopColor="#22D3EE" stopOpacity={0} />
           </linearGradient>
+          <linearGradient id="trendStroke" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#7C3AED" />
+            <stop offset="100%" stopColor="#22D3EE" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-        <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-        <YAxis
-          tick={{ fontSize: 11 }}
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="rgba(255,255,255,0.04)"
+          vertical={false}
+        />
+        <XAxis
+          dataKey="month"
+          tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.35)' }}
           axisLine={false}
           tickLine={false}
-          width={40}
+        />
+        <YAxis
+          tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.35)' }}
+          axisLine={false}
+          tickLine={false}
+          width={42}
           tickFormatter={v => useRate ? `${v}%` : `$${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<DarkTooltip />} cursor={{ stroke: 'rgba(124,58,237,0.4)', strokeWidth: 1, strokeDasharray: '4 2' }} />
         {targetRate !== undefined && (
-          <ReferenceLine y={targetRate} stroke="#10B981" strokeDasharray="5 4" label={{ value: `${targetRate}% target`, fill: '#10B981', fontSize: 10 }} />
+          <ReferenceLine
+            y={targetRate}
+            stroke="#10B981"
+            strokeDasharray="5 4"
+            strokeWidth={1.5}
+            label={{ value: `${targetRate}% target`, fill: 'rgba(52,211,153,0.7)', fontSize: 10, position: 'insideTopRight' }}
+          />
         )}
         <Area
           type="monotone"
           dataKey={dataKey}
-          stroke={strokeColor}
-          strokeWidth={2}
-          fill="url(#trendGradient)"
-          dot={{ r: 3, fill: strokeColor, strokeWidth: 0 }}
-          activeDot={{ r: 5, fill: strokeColor }}
+          stroke="url(#trendStroke)"
+          strokeWidth={2.5}
+          fill="url(#trendFill)"
+          dot={false}
+          activeDot={{ r: 5, fill: '#a78bfa', stroke: '#070711', strokeWidth: 2, filter: 'url(#glow)' }}
         />
       </AreaChart>
     </ResponsiveContainer>
