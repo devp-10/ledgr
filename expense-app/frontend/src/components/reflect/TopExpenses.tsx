@@ -52,24 +52,24 @@ export function TopExpenses({ transactions, loading }: TopExpensesProps) {
     .slice(0, 10)
 
   if (!expenses.length) return (
-    <p className="text-sm text-white/30 text-center py-8">No expenses this period</p>
+    <p className="text-sm text-gray-400 text-center py-8">No expenses this period</p>
   )
 
   return (
     <div className="space-y-1">
       {expenses.map((t, i) => (
-        <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/03 transition-colors">
-          <span className="text-xs font-medium text-white/25 w-4 text-right flex-shrink-0">{i + 1}</span>
+        <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 w-4 text-right flex-shrink-0">{i + 1}</span>
           <span className="text-lg flex-shrink-0">{getMerchantEmoji(t.description)}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white/80 truncate">{t.description}</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{t.description}</p>
             {t.category && (
               <span className={clsx('text-xs px-1.5 py-0.5 rounded-md font-medium', getCategoryColor(t.category))}>
                 {t.category}
               </span>
             )}
           </div>
-          <span className="font-money font-semibold text-white/70 flex-shrink-0">
+          <span className="font-money font-semibold text-gray-900 dark:text-gray-100 flex-shrink-0">
             {formatMoney(t.amount)}
           </span>
         </div>

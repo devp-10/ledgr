@@ -27,7 +27,7 @@ function groupByDate(txns: Transaction[]) {
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
+    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border-light dark:border-border-dark">
       <div className="w-4 h-4 skeleton" />
       <div className="flex-1 space-y-1.5">
         <div className="h-3.5 skeleton w-3/5" />
@@ -44,7 +44,7 @@ export function TransactionList({
 }: TransactionListProps) {
   if (loading && !transactions.length) {
     return (
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
         {[1,2,3,4,5,6,7,8].map(i => <SkeletonRow key={i} />)}
       </div>
     )
@@ -64,16 +64,16 @@ export function TransactionList({
   const allSelected = transactions.every(t => selectedIds.has(t.id))
 
   return (
-    <div className="glass rounded-2xl overflow-hidden">
+    <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
       {/* Select all header */}
-      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/06">
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
         <input
           type="checkbox"
           checked={allSelected && transactions.length > 0}
           onChange={e => onSelectAll(e.target.checked)}
-          className="w-4 h-4 rounded border-white/20 bg-white/05 text-primary-500 focus:ring-primary-500/30 focus:ring-offset-0 cursor-pointer"
+          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 focus:ring-offset-0 cursor-pointer"
         />
-        <span className="text-xs text-white/30">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
           {selectedIds.size > 0
             ? `${selectedIds.size} selected of ${total}`
             : `${total.toLocaleString()} transaction${total !== 1 ? 's' : ''}`}
@@ -83,8 +83,8 @@ export function TransactionList({
       {/* Grouped rows */}
       {groups.map(([date, txns]) => (
         <div key={date}>
-          <div className="sticky top-[112px] z-10 glass px-4 py-1.5 border-b border-white/04">
-            <span className="text-xs font-semibold text-white/30">
+          <div className="sticky top-14 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-border-light dark:border-border-dark">
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
               {(() => { try { return format(parseISO(date), 'EEEE, MMMM d, yyyy') } catch { return date } })()}
             </span>
           </div>

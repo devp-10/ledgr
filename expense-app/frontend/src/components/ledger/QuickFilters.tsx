@@ -22,10 +22,10 @@ export function QuickFilters({ active, onChange }: QuickFiltersProps) {
           key={f.id}
           onClick={() => onChange(f.id)}
           className={clsx(
-            'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150',
+            'flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-md transition-colors',
             active === f.id
-              ? 'tab-pill-active'
-              : 'text-white/40 hover:text-white/70 hover:bg-white/05 border border-transparent'
+              ? 'bg-accent-500 text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
           )}
         >
           {f.label}

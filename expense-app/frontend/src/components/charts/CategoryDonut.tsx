@@ -17,27 +17,20 @@ const renderActiveShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
   return (
     <g>
-      <Sector
-        cx={cx} cy={cy}
-        innerRadius={innerRadius - 2}
-        outerRadius={outerRadius + 8}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{ filter: `drop-shadow(0 0 8px ${fill}80)` }}
-      />
+      <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 6}
+        startAngle={startAngle} endAngle={endAngle} fill={fill} />
     </g>
   )
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DarkTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null
   const item = payload[0]
   return (
-    <div className="chart-tooltip">
-      <div className="text-white/70 mb-1">{item.name}</div>
-      <div className="font-money text-white font-semibold">{formatMoney(item.value)}</div>
+    <div className="bg-surface dark:bg-gray-800 rounded-lg shadow-soft border border-border-light dark:border-border-dark p-3 text-sm">
+      <div className="text-gray-600 dark:text-gray-400 mb-1">{item.name}</div>
+      <div className="font-money text-gray-900 dark:text-gray-100 font-semibold">{formatMoney(item.value)}</div>
     </div>
   )
 }
@@ -46,7 +39,7 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null)
 
   if (!data.length) return (
-    <div className="flex items-center justify-center h-48 text-sm text-white/30">
+    <div className="flex items-center justify-center h-48 text-sm text-gray-400">
       No spending data
     </div>
   )
@@ -65,7 +58,7 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
               cx="50%"
               cy="50%"
               innerRadius={60}
-              outerRadius={88}
+              outerRadius={85}
               activeIndex={activeIdx ?? undefined}
               activeShape={renderActiveShape}
               onMouseEnter={(_, i) => setActiveIdx(i)}
@@ -77,13 +70,12 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
                 <Cell key={entry.category} fill={getCategoryDotColor(entry.category)} />
               ))}
             </Pie>
-            <Tooltip content={<DarkTooltip />} />
+            <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
-        {/* Center label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-xs text-white/40">Total</span>
-          <span className="text-lg font-bold font-money gradient-text">{formatMoney(total)}</span>
+          <span className="text-xs text-gray-400">Total</span>
+          <span className="text-lg font-bold font-money text-gray-900 dark:text-gray-100">{formatMoney(total)}</span>
         </div>
       </div>
 
@@ -91,25 +83,19 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
         {sorted.map((item, i) => (
           <div
             key={item.category}
-            className={`flex items-center justify-between text-sm transition-opacity cursor-default ${activeIdx === null || activeIdx === i ? 'opacity-100' : 'opacity-40'}`}
+            className={`flex items-center justify-between text-sm transition-opacity ${activeIdx === null || activeIdx === i ? 'opacity-100' : 'opacity-40'}`}
             onMouseEnter={() => setActiveIdx(i)}
             onMouseLeave={() => setActiveIdx(null)}
           >
             <div className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{
-                  backgroundColor: getCategoryDotColor(item.category),
-                  boxShadow: `0 0 6px ${getCategoryDotColor(item.category)}80`
-                }}
-              />
-              <span className="text-white/60 truncate max-w-[120px] text-xs">{item.category}</span>
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryDotColor(item.category) }} />
+              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[120px] text-xs">{item.category}</span>
             </div>
             <div className="flex items-center gap-3 ml-2 flex-shrink-0">
-              <span className="text-white/30 text-xs">
+              <span className="text-gray-400 dark:text-gray-500 text-xs">
                 {total > 0 ? Math.round((item.amount / total) * 100) : 0}%
               </span>
-              <span className="font-money text-white/80 text-xs">{formatMoney(item.amount)}</span>
+              <span className="font-money text-gray-900 dark:text-gray-100 text-xs">{formatMoney(item.amount)}</span>
             </div>
           </div>
         ))}

@@ -12,15 +12,6 @@ import { Card, CardHeader, CardContent, CardTitle } from '../components/ui/Card'
 import { MonthPicker } from '../components/common/MonthPicker'
 import { useToastContext } from '../App'
 
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <div className="flex items-center gap-3 my-6">
-      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">{title}</h2>
-      <div className="flex-1 section-divider" />
-    </div>
-  )
-}
-
 export function Reflect() {
   const addToast = useToastContext()
   const [month, setMonth] = useState(format(new Date(), 'yyyy-MM'))
@@ -36,7 +27,10 @@ export function Reflect() {
       api.getDashboard(month),
       api.getDashboard(prevMonth),
     ])
-      .then(([curr, prev]) => { setCurrent(curr); setPrevious(prev) })
+      .then(([curr, prev]) => {
+        setCurrent(curr)
+        setPrevious(prev)
+      })
       .catch(() => addToast('Failed to load dashboard data', 'error'))
       .finally(() => setLoading(false))
   }, [month]) // eslint-disable-line
@@ -44,21 +38,19 @@ export function Reflect() {
   const totalSpending = Math.abs(current?.total_spending ?? 0)
 
   return (
-    <div className="space-y-2 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Period selector */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <MonthPicker value={month} onChange={setMonth} />
-        <div className="text-xs text-white/25">
+        <div className="text-xs text-gray-400 dark:text-gray-500">
           Comparing to previous month
         </div>
       </div>
 
-      {/* ── OVERVIEW ─────────────────────────────────────── */}
-      <SectionHeader title="Overview" />
-
+      {/* Overview */}
       <SummaryCards current={current} previous={previous} loading={loading} />
 
-      <Card className="mt-4">
+      <Card>
         <CardHeader>
           <CardTitle>Spending vs Income (6 months)</CardTitle>
         </CardHeader>
@@ -67,9 +59,7 @@ export function Reflect() {
         </CardContent>
       </Card>
 
-      {/* ── SPENDING BREAKDOWN ────────────────────────────── */}
-      <SectionHeader title="Spending Breakdown" />
-
+      {/* Spending Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
@@ -109,9 +99,7 @@ export function Reflect() {
         </CardContent>
       </Card>
 
-      {/* ── COMPARISONS ──────────────────────────────────── */}
-      <SectionHeader title="Comparisons" />
-
+      {/* Comparisons */}
       <Card>
         <CardHeader>
           <CardTitle>Category Comparison: This Month vs Last Month</CardTitle>
@@ -125,9 +113,7 @@ export function Reflect() {
         </CardContent>
       </Card>
 
-      {/* ── SAVINGS & TRENDS ─────────────────────────────── */}
-      <SectionHeader title="Savings & Trends" />
-
+      {/* Savings & Trends */}
       <Card>
         <CardHeader>
           <CardTitle>Savings Rate Over Time</CardTitle>
@@ -135,7 +121,7 @@ export function Reflect() {
         <CardContent>
           <TrendLine data={current?.monthly_trend ?? []} targetRate={30} />
           {!loading && current && (
-            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/06">
+            <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-border-light dark:border-border-dark">
               {[
                 {
                   label: 'This Month',
@@ -154,8 +140,8 @@ export function Reflect() {
                 },
               ].map(stat => (
                 <div key={stat.label} className="text-center">
-                  <p className="text-xs text-white/30">{stat.label}</p>
-                  <p className="text-lg font-bold font-money gradient-text mt-0.5">{stat.value}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+                  <p className="text-lg font-bold font-money text-gray-900 dark:text-gray-100 mt-0.5">{stat.value}</p>
                 </div>
               ))}
             </div>

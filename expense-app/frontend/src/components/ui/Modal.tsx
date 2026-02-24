@@ -14,14 +14,18 @@ interface ModalProps {
 export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
   useEffect(() => {
     if (!open) return
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, onClose])
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [open])
 
   if (!open) return null
@@ -31,28 +35,28 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-fade-in"
+        className="absolute inset-0 bg-black/40 animate-fade-in"
         onClick={onClose}
       />
-      <div className={clsx(
-        'relative w-full glass rounded-2xl animate-count-up overflow-hidden',
-        maxW,
-        className
-      )}>
+      <div
+        className={clsx(
+          'relative w-full rounded-lg bg-surface dark:bg-[#171717] shadow-soft border border-border-light dark:border-border-dark overflow-hidden',
+          maxW,
+          className
+        )}
+      >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/06">
-            <h2 className="text-base font-semibold text-white/90">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border-light dark:border-border-dark">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/05 transition-colors"
+              className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
             >
               <X size={16} />
             </button>
           </div>
         )}
-        <div className="overflow-y-auto max-h-[80vh]">
-          {children}
-        </div>
+        <div className="overflow-y-auto max-h-[80vh]">{children}</div>
       </div>
     </div>
   )
