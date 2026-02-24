@@ -3,18 +3,16 @@ import { clsx } from 'clsx'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   hover?: boolean
-  glow?: boolean
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ hover, glow, className, children, ...props }, ref) => {
+  ({ hover, className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={clsx(
-          'glass rounded-2xl',
-          hover && 'glass-hover cursor-pointer',
-          glow && 'shadow-glow-violet',
+          'rounded-lg bg-surface dark:bg-[#171717] border border-border-light dark:border-border-dark shadow-card',
+          hover && 'transition-shadow hover:shadow-soft',
           className
         )}
         {...props}
@@ -35,5 +33,5 @@ export const CardContent = ({ className, ...props }: HTMLAttributes<HTMLDivEleme
 )
 
 export const CardTitle = ({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
-  <h3 className={clsx('text-xs font-semibold text-white/40 uppercase tracking-widest', className)} {...props} />
+  <h3 className={clsx('text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide', className)} {...props} />
 )

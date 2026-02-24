@@ -92,11 +92,10 @@ export function Settings() {
   return (
     <div className="max-w-2xl space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-xl font-bold gradient-text">Settings</h1>
-        <p className="text-sm text-white/30 mt-1">Configure your Ledgr preferences</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your Ledgr preferences</p>
       </div>
 
-      {/* AI Categorization */}
       <Card>
         <CardHeader>
           <CardTitle>AI Categorization</CardTitle>
@@ -111,11 +110,11 @@ export function Settings() {
             />
 
             <div>
-              <label className="text-xs font-medium text-white/40 mb-1 block">Model</label>
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Model</label>
               <select
                 value={settings.model}
                 onChange={e => setSettings(s => ({ ...s, model: e.target.value }))}
-                className="input-dark w-full text-sm px-3 py-2"
+                className="w-full rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500"
               >
                 {OLLAMA_MODELS.map(m => (
                   <option key={m} value={m}>{m}</option>
@@ -133,10 +132,10 @@ export function Settings() {
             </div>
 
             {testResult && (
-              <div className={`flex items-center gap-2 p-3 rounded-xl text-sm ${
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
                 testResult.connected
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  ? 'bg-status-positive-bg dark:bg-emerald-900/20 text-status-positive border border-emerald-200 dark:border-emerald-800/50'
+                  : 'bg-status-negative-bg dark:bg-red-900/20 text-status-negative border border-red-200 dark:border-red-800/50'
               }`}>
                 {testResult.connected
                   ? <CheckCircle2 size={16} className="flex-shrink-0" />
@@ -151,17 +150,12 @@ export function Settings() {
               </div>
             )}
 
-            <div className="border-t border-white/06 pt-4">
-              <Button
-                variant="secondary"
-                size="sm"
-                loading={recategorizing}
-                onClick={handleRecategorize}
-              >
+            <div className="border-t border-border-light dark:border-border-dark pt-4">
+              <Button variant="secondary" size="sm" loading={recategorizing} onClick={handleRecategorize}>
                 <RefreshCw size={14} />
                 Re-categorize All Transactions
               </Button>
-              <p className="text-xs text-white/25 mt-1.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
                 Uses the selected AI model to re-categorize all existing transactions.
               </p>
             </div>
@@ -169,7 +163,6 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      {/* Data Management */}
       <Card>
         <CardHeader>
           <CardTitle>Data Management</CardTitle>
@@ -181,10 +174,10 @@ export function Settings() {
               Export All Transactions (CSV)
             </Button>
 
-            <div className="border-t border-white/06 pt-3">
+            <div className="border-t border-border-light dark:border-border-dark pt-3">
               {confirmClear ? (
                 <div className="space-y-2">
-                  <p className="text-sm text-red-400 font-medium">
+                  <p className="text-sm text-status-negative font-medium">
                     ⚠️ This will permanently delete all transactions. Are you sure?
                   </p>
                   <div className="flex gap-2">
@@ -208,20 +201,19 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      {/* About */}
       <Card>
         <CardHeader>
           <CardTitle>About</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm text-white/40">
+          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
-              <Database size={14} className="text-primary-400" />
+              <Database size={14} className="text-accent-500" />
               <span>Ledgr v1.0.0 — Local-first expense tracker with AI categorization</span>
             </div>
             {testResult?.connected && (
               <div className="flex items-center gap-2">
-                <CheckCircle2 size={14} className="text-emerald-400" />
+                <CheckCircle2 size={14} className="text-status-positive" />
                 <span>Ollama: Connected ({settings.model})</span>
               </div>
             )}

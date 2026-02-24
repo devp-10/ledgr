@@ -14,12 +14,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={clsx(
-          'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100',
+          'inline-flex items-center justify-center gap-2 font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed',
           {
-            'btn-glow text-white font-semibold': variant === 'primary',
-            'glass text-white/70 hover:text-white hover:border-white/20 border border-white/10': variant === 'secondary',
-            'text-white/50 hover:text-white/80 hover:bg-white/05 rounded-lg': variant === 'ghost',
-            'bg-danger-500/20 text-danger-400 border border-danger-500/30 hover:bg-danger-500/30': variant === 'danger',
+            'bg-accent-500 text-white hover:bg-accent-600 shadow-sm': variant === 'primary',
+            'bg-surface dark:bg-white/5 text-gray-700 dark:text-gray-200 border border-border-light dark:border-border-dark hover:bg-gray-50 dark:hover:bg-white/10':
+              variant === 'secondary',
+            'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-white/5':
+              variant === 'ghost',
+            'bg-status-negative text-white hover:bg-red-700': variant === 'danger',
             'text-xs px-2.5 py-1.5': size === 'sm',
             'text-sm px-4 py-2': size === 'md',
             'text-base px-5 py-2.5': size === 'lg',

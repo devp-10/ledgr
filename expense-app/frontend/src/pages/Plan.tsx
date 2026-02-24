@@ -53,7 +53,7 @@ export function Plan() {
       {/* Month selector */}
       <div className="flex items-center justify-between">
         <MonthPicker value={month} onChange={setMonth} />
-        <p className="text-xs text-white/25">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           Budget targets are stored locally
         </p>
       </div>
@@ -65,15 +65,16 @@ export function Plan() {
         loading={loading}
       />
 
-      {/* Section header */}
-      <div className="flex items-center justify-between mt-2">
-        <h2 className="text-xs font-semibold text-white/30 uppercase tracking-widest">
-          Category Groups
-        </h2>
+      {/* Column headers (YNAB-style) */}
+      <div className="flex items-center gap-3 px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <div className="w-52 flex-shrink-0">Category</div>
+        <div className="w-28 flex-shrink-0 text-right">Assigned</div>
+        <div className="w-28 flex-shrink-0 text-right">Activity</div>
+        <div className="w-32 flex-shrink-0 text-right">Available</div>
       </div>
 
       {/* Category groups */}
-      <div className="space-y-3">
+      <div className="space-y-0">
         {groups.map(group => {
           const groupCats = categories.filter(c => c.group === group.id)
           return (
@@ -99,9 +100,12 @@ export function Plan() {
               autoFocus
               value={addGroupName}
               onChange={e => setAddGroupName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleAddGroup(); if (e.key === 'Escape') setShowAddGroup(false) }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleAddGroup()
+                if (e.key === 'Escape') setShowAddGroup(false)
+              }}
               placeholder="Group name..."
-              className="flex-1 input-dark text-sm px-3 py-2"
+              className="flex-1 rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
             />
             <Button variant="primary" size="sm" onClick={handleAddGroup}>Add</Button>
             <Button variant="ghost" size="sm" onClick={() => setShowAddGroup(false)}>Cancel</Button>
@@ -119,8 +123,14 @@ export function Plan() {
         groups={groups}
         open={!!selectedCategoryId}
         onClose={() => setSelectedCategoryId(null)}
-        onSave={(id, changes) => { updateCategory(id, changes as Partial<BudgetCategory>); addToast('Category saved', 'success') }}
-        onDelete={id => { deleteCategory(id); addToast('Category deleted', 'info') }}
+        onSave={(id, changes) => {
+          updateCategory(id, changes as Partial<BudgetCategory>)
+          addToast('Category saved', 'success')
+        }}
+        onDelete={id => {
+          deleteCategory(id)
+          addToast('Category deleted', 'info')
+        }}
       />
     </div>
   )
