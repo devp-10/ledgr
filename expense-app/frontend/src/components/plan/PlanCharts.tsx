@@ -1,8 +1,17 @@
-import { CheckCircle2 } from 'lucide-react'
 import { BudgetGroup, SpendingCategory } from '../../types'
 import { Progress } from '../ui/Progress'
 import { Card, CardContent } from '../ui/Card'
 import { clsx } from 'clsx'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  Legend,
+} from 'recharts'
 
 interface PlanChartsProps {
   groups: BudgetGroup[]
@@ -15,38 +24,71 @@ function formatMoney(n: number) {
   return '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
+function formatMoneyAxis(n: number) {
+  if (n >= 1000) return '$' + (n / 1000).toFixed(0) + 'k'
+  return '$' + n
+}
+
 interface CategoryVariance {
   emoji: string
   name: string
+  label: string
   budgeted: number
   spent: number
-  variance: number // positive = surplus, negative = overage
+  variance: number
+}
+
+const BUDGET_COLOR = '#94a3b8'   // slate-400
+const ACTUAL_OVER  = '#f87171'   // red-400
+const ACTUAL_OK    = '#34d399'   // emerald-400
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  const budgeted = payload.find((p: any) => p.dataKey === 'budgeted')?.value ?? 0
+  const spent    = payload.find((p: any) => p.dataKey === 'spent')?.value ?? 0
+  const over     = spent > budgeted
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-3 py-2 text-xs space-y-1 min-w-[130px]">
+      <p className="font-semibold text-gray-700 dark:text-gray-300">{label}</p>
+      <p className="text-gray-500 dark:text-gray-400">Budgeted: <span className="font-money">{formatMoney(budgeted)}</span></p>
+      <p className={over ? 'text-status-negative' : 'text-status-positive'}>
+        Actual: <span className="font-money">{formatMoney(spent)}</span>
+      </p>
+    </div>
+  )
 }
 
 export function PlanCharts({ groups, spendingData, totalSpending, loading }: PlanChartsProps) {
   const totalBudgeted = groups.flatMap(g => g.categories).reduce((s, c) => s + c.budget_amount, 0)
 
-  // Build per-category variance list
-  const variances: CategoryVariance[] = groups.flatMap(g =>
-    g.categories
-      .filter(c => c.budget_amount > 0)
-      .map(c => {
-        const s = spendingData.find(d => d.category === c.name)
-        const spent = s ? Math.abs(s.amount) : 0
-        return { emoji: c.emoji, name: c.name, budgeted: c.budget_amount, spent, variance: c.budget_amount - spent }
-      })
-  )
+  const variances: CategoryVariance[] = groups
+    .flatMap(g =>
+      g.categories
+        .filter(c => c.budget_amount > 0 || spendingData.find(d => d.category === c.name))
+        .map(c => {
+          const s     = spendingData.find(d => d.category === c.name)
+          const spent = s ? Math.abs(s.amount) : 0
+          return {
+            emoji:    c.emoji,
+            name:     c.name,
+            label:    c.emoji ? `${c.emoji} ${c.name}` : c.name,
+            budgeted: c.budget_amount,
+            spent,
+            variance: c.budget_amount - spent,
+          }
+        })
+    )
+    .sort((a, b) => b.spent - a.spent)  // highest actual first
 
-  const overBudget = variances.filter(v => v.variance < 0).sort((a, b) => a.variance - b.variance).slice(0, 5)
-  const surplus    = variances.filter(v => v.variance > 0).sort((a, b) => b.variance - a.variance).slice(0, 5)
-
-  const diff = totalBudgeted - totalSpending
+  const diff       = totalBudgeted - totalSpending
   const overallOver = diff < 0
+  const hasData    = totalSpending > 0 || totalBudgeted > 0
 
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map(i => (
+        {[1, 2].map(i => (
           <Card key={i}>
             <CardContent className="pt-4 pb-5">
               <div className="h-24 skeleton rounded-lg" />
@@ -57,12 +99,10 @@ export function PlanCharts({ groups, spendingData, totalSpending, loading }: Pla
     )
   }
 
-  const hasData = totalSpending > 0 || totalBudgeted > 0
-
   return (
     <div className="space-y-4">
 
-      {/* Card 1: Budget vs Actual */}
+      {/* Card 1: Budget vs Actual summary */}
       <Card>
         <CardContent className="pt-4 pb-5 space-y-3">
           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -105,49 +145,56 @@ export function PlanCharts({ groups, spendingData, totalSpending, loading }: Pla
         </CardContent>
       </Card>
 
-      {/* Card 2: Over Budget */}
+      {/* Card 2: Horizontal double bar chart — Budget vs Actual by subcategory */}
       <Card>
-        <CardContent className="pt-4 pb-4 space-y-1">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-            Over Budget
+        <CardContent className="pt-4 pb-4">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+            By Category
           </p>
-          {overBudget.length === 0 ? (
-            <div className="flex items-center gap-2 py-2 text-status-positive">
-              <CheckCircle2 size={15} />
-              <span className="text-sm">All categories on track</span>
-            </div>
+          {!hasData || variances.length === 0 ? (
+            <p className="text-xs text-gray-400 dark:text-gray-500 py-2">No data for this month yet.</p>
           ) : (
-            overBudget.map(v => (
-              <div key={v.name} className="flex items-center gap-2 py-1.5">
-                <span className="text-sm flex-shrink-0">{v.emoji}</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{v.name}</span>
-                <span className="text-xs font-money text-status-negative flex-shrink-0">
-                  +{formatMoney(Math.abs(v.variance))} over
-                </span>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Card 3: Surplus */}
-      <Card>
-        <CardContent className="pt-4 pb-4 space-y-1">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-            Surplus
-          </p>
-          {surplus.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-gray-500 py-2">No surplus categories.</p>
-          ) : (
-            surplus.map(v => (
-              <div key={v.name} className="flex items-center gap-2 py-1.5">
-                <span className="text-sm flex-shrink-0">{v.emoji}</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">{v.name}</span>
-                <span className="text-xs font-money text-status-positive flex-shrink-0">
-                  {formatMoney(v.variance)} left
-                </span>
-              </div>
-            ))
+            <ResponsiveContainer width="100%" height={variances.length * 40 + 32}>
+              <BarChart
+                layout="vertical"
+                data={variances}
+                margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
+                barCategoryGap="25%"
+                barGap={2}
+              >
+                <XAxis
+                  type="number"
+                  tickFormatter={formatMoneyAxis}
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  width={110}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(148,163,184,0.08)' }} />
+                <Legend
+                  iconSize={8}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                  formatter={(value) => value === 'budgeted' ? 'Budgeted' : 'Actual'}
+                />
+                <Bar dataKey="budgeted" name="budgeted" fill={BUDGET_COLOR} radius={[0, 3, 3, 0]} />
+                <Bar dataKey="spent" name="spent" radius={[0, 3, 3, 0]}>
+                  {variances.map((v) => (
+                    <Cell
+                      key={v.name}
+                      fill={v.spent > v.budgeted ? ACTUAL_OVER : ACTUAL_OK}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
