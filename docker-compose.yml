@@ -31,7 +31,7 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-mistral}
       - DB_PATH=/data/expenses.db
     volumes:
-      - db_data:/data              # SQLite database persists here
+      - ./data:/data               # SQLite database lives at ./data/expenses.db on the host
     depends_on:
       ollama:
         condition: service_healthy
@@ -46,4 +46,3 @@ services:
 
 volumes:
   ollama_data:   # model weights (downloaded once, persisted across restarts)
-  db_data:       # SQLite database

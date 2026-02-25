@@ -11,8 +11,10 @@ OLLAMA_URL_DEFAULT = "http://localhost:11434"
 OLLAMA_MODEL_DEFAULT = "mistral"
 
 # ── Database ──────────────────────────────────────────────────────────────────
-_db_default = Path(__file__).parent.parent.parent / "data" / "expenses.db"
-DB_PATH = Path(os.environ.get("DB_PATH", str(_db_default)))
+_db_path = os.environ.get("DB_PATH")
+if not _db_path:
+    raise RuntimeError("DB_PATH environment variable is required. Run the app via Docker.")
+DB_PATH = Path(_db_path)
 
 # ── HTTP timeouts (seconds) ───────────────────────────────────────────────────
 CATEGORIZE_TIMEOUT = 180.0
