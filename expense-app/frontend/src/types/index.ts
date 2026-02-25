@@ -14,8 +14,6 @@ export type {
   DashboardSummary,
   CategoryBreakdown,
   MonthlyReport,
-  OllamaSettings,
-  OllamaTestResult,
 } from '../lib/api'
 
 // ─── Budget Types (stored in localStorage) ────────────────────────────────────
