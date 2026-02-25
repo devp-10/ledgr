@@ -12,7 +12,7 @@ import { BulkActions } from '../components/ledger/BulkActions'
 import { ImportModal } from '../components/ledger/ImportModal'
 import { AddTransactionModal } from '../components/ledger/AddTransactionModal'
 import { Button } from '../components/ui/Button'
-import { QuickFilter, LedgerView, Account, TransactionUpdate, SplitItem } from '../types'
+import { QuickFilter, LedgerView, Account, TransactionUpdate } from '../types'
 import { api } from '../lib/api'
 import { useToastContext } from '../App'
 import { clsx } from 'clsx'
@@ -122,28 +122,6 @@ export function Ledger() {
       addToast('Transaction deleted', 'success')
     } catch {
       addToast('Failed to delete transaction', 'error')
-    }
-  }, [active, addToast])
-
-  // Duplicate
-  const handleDuplicate = useCallback(async (id: number) => {
-    try {
-      await api.duplicateTransaction(id)
-      await active.refetch()
-      addToast('Transaction duplicated', 'success')
-    } catch {
-      addToast('Failed to duplicate transaction', 'error')
-    }
-  }, [active, addToast])
-
-  // Split
-  const handleSplit = useCallback(async (id: number, splits: SplitItem[]) => {
-    try {
-      await api.splitTransaction(id, splits)
-      await active.refetch()
-      addToast('Transaction split', 'success')
-    } catch {
-      addToast('Failed to split transaction', 'error')
     }
   }, [active, addToast])
 
@@ -303,8 +281,6 @@ export function Ledger() {
           onSelect={handleSelect}
           onPatch={handlePatch}
           onDelete={handleDelete}
-          onDuplicate={handleDuplicate}
-          onSplit={handleSplit}
           loading={allTx.loading}
           total={allTx.total}
           sortBy={sortBy}

@@ -1,5 +1,5 @@
 import { useState, ReactNode } from 'react'
-import { Transaction, TransactionType, TransactionUpdate, SplitItem } from '../../types'
+import { Transaction, TransactionUpdate } from '../../types'
 import { TransactionRow } from './TransactionRow'
 import { EmptyState } from '../common/EmptyState'
 import { Receipt, ChevronDown } from 'lucide-react'
@@ -15,8 +15,6 @@ interface TransactionListProps {
   onSelect: (id: number, checked: boolean) => void
   onPatch: (id: number, update: Partial<TransactionUpdate>) => Promise<void>
   onDelete: (id: number) => Promise<void>
-  onDuplicate: (id: number) => Promise<void>
-  onSplit?: (id: number, splits: SplitItem[]) => Promise<void>
   loading?: boolean
   total: number
   sortBy: string
@@ -30,12 +28,13 @@ function SkeletonRow() {
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border-light dark:border-border-dark">
       <div className="w-4 h-4 skeleton rounded" />
-      <div className="w-12 h-3 skeleton" />
-      <div className="w-14 h-4 skeleton rounded" />
+      <div className="w-[88px] h-3 skeleton" />
       <div className="flex-1 h-3.5 skeleton" />
-      <div className="w-20 h-4 skeleton rounded" />
+      <div className="w-32 h-4 skeleton rounded" />
+      <div className="w-24 h-3 skeleton hidden lg:block" />
+      <div className="w-[84px] h-4 skeleton rounded" />
       <div className="w-24 h-3.5 skeleton" />
-      <div className="w-24 h-3.5 skeleton" />
+      <div className="w-16 h-4 skeleton" />
     </div>
   )
 }
@@ -52,7 +51,7 @@ function groupTransactions(txns: Transaction[], groupBy: string): [string, Trans
   if (groupBy === 'month') {
     const groups = new Map<string, Transaction[]>()
     for (const t of txns) {
-      const key = t.date.substring(0, 7) // YYYY-MM
+      const key = t.date.substring(0, 7)
       if (!groups.has(key)) groups.set(key, [])
       groups.get(key)!.push(t)
     }
@@ -86,9 +85,7 @@ function groupLabel(key: string, groupBy: string, accounts: { id: number; name: 
   if (groupBy === 'month') {
     try { return format(parseISO(key + '-01'), 'MMMM yyyy') } catch { return key }
   }
-  if (groupBy === 'type') {
-    return key.charAt(0).toUpperCase() + key.slice(1) + 's'
-  }
+  if (groupBy === 'type') return key.charAt(0).toUpperCase() + key.slice(1) + 's'
   if (groupBy === 'account') {
     if (key === '__none__') return 'No Account'
     const acct = accounts.find(a => String(a.id) === key)
@@ -97,23 +94,28 @@ function groupLabel(key: string, groupBy: string, accounts: { id: number; name: 
   return key
 }
 
-const SORT_COLS = [
-  { id: 'date', label: 'Date' },
-  { id: 'amount', label: 'Amount' },
-  { id: 'transaction_type', label: 'Type' },
-  { id: 'category', label: 'Category' },
-]
-
 const GROUP_OPTIONS = [
-  { id: 'date', label: 'Date' },
-  { id: 'month', label: 'Month' },
-  { id: 'type', label: 'Type' },
+  { id: 'date',    label: 'Date' },
+  { id: 'month',   label: 'Month' },
+  { id: 'type',    label: 'Type' },
   { id: 'account', label: 'Account' },
 ]
 
+// Column widths — must match TransactionRow exactly
+const COL = {
+  checkbox:    'w-4 flex-shrink-0',
+  date:        'w-[88px] flex-shrink-0',
+  description: 'flex-1 min-w-0',
+  category:    'w-32 flex-shrink-0',
+  notes:       'w-24 flex-shrink-0 hidden lg:block',
+  type:        'w-[84px] flex-shrink-0',
+  amount:      'w-24 flex-shrink-0 text-right',
+  actions:     'w-16 flex-shrink-0',
+}
+
 export function TransactionList({
   transactions, categories, accounts, selectedIds, onSelectAll, onSelect, onPatch, onDelete,
-  onDuplicate, onSplit, loading, total, sortBy, sortDir, groupBy, onSort, onGroupBy
+  loading, total, sortBy, sortDir, groupBy, onSort, onGroupBy
 }: TransactionListProps) {
   const [showGroupMenu, setShowGroupMenu] = useState(false)
 
@@ -138,61 +140,58 @@ export function TransactionList({
   const groups = groupTransactions(transactions, groupBy)
   const allSelected = transactions.length > 0 && transactions.every(t => selectedIds.has(t.id))
 
-  const SortHeader = ({ col, children }: { col: string; children: ReactNode }) => (
+  const SortBtn = ({ col, children }: { col: string; children: ReactNode }) => (
     <button
       onClick={() => onSort(col)}
       className={clsx(
-        'flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
-        sortBy === col ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+        'inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
+        sortBy === col
+          ? 'text-accent-600 dark:text-accent-400'
+          : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
       )}
     >
       {children}
-      {sortBy === col && (
-        <ChevronDown size={10} className={sortDir === 'asc' ? 'rotate-180' : ''} />
-      )}
+      {sortBy === col && <ChevronDown size={10} className={sortDir === 'asc' ? 'rotate-180' : ''} />}
     </button>
+  )
+
+  const ColLabel = ({ children }: { children: ReactNode }) => (
+    <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+      {children}
+    </span>
   )
 
   return (
     <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
-      {/* Table header */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
-        <input
-          type="checkbox"
-          checked={allSelected}
-          onChange={e => onSelectAll(e.target.checked)}
-          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 focus:ring-offset-0 cursor-pointer flex-shrink-0"
-        />
-        <SortHeader col="date"><span>Date</span></SortHeader>
-        <div className="w-[72px] flex-shrink-0">
-          <SortHeader col="transaction_type"><span>Type</span></SortHeader>
+
+      {/* ── Column header ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 px-4 py-2 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
+        <div className={COL.checkbox}>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={e => onSelectAll(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 focus:ring-offset-0 cursor-pointer"
+          />
         </div>
-        <div className="flex-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Description</span>
-        </div>
-        <div className="w-32 flex-shrink-0">
-          <SortHeader col="category"><span>Category</span></SortHeader>
-        </div>
-        <div className="w-28 hidden lg:block flex-shrink-0">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Notes</span>
-        </div>
-        <div className="w-24 flex-shrink-0 text-right">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Outflow</span>
-        </div>
-        <div className="w-24 flex-shrink-0 text-right">
-          <SortHeader col="amount"><span>Amount</span></SortHeader>
-        </div>
-        {/* Group by control */}
-        <div className="relative ml-2">
+        <div className={COL.date}>        <SortBtn col="date">Date</SortBtn></div>
+        <div className={COL.description}> <ColLabel>Description</ColLabel></div>
+        <div className={COL.category}>    <SortBtn col="category">Category</SortBtn></div>
+        <div className={COL.notes}>       <ColLabel>Notes</ColLabel></div>
+        <div className={COL.type}>        <SortBtn col="transaction_type">Type</SortBtn></div>
+        <div className={COL.amount}>      <SortBtn col="amount">Amount</SortBtn></div>
+
+        {/* Group-by picker lives where actions column is */}
+        <div className="w-16 flex-shrink-0 flex justify-end relative">
           <button
             onClick={() => setShowGroupMenu(g => !g)}
             className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex items-center gap-0.5 transition-colors whitespace-nowrap"
           >
-            Group: {GROUP_OPTIONS.find(o => o.id === groupBy)?.label}
+            {GROUP_OPTIONS.find(o => o.id === groupBy)?.label ?? 'Date'}
             <ChevronDown size={10} />
           </button>
           {showGroupMenu && (
-            <div className="absolute right-0 top-full mt-1 z-20 w-36 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft py-1">
+            <div className="absolute right-0 top-full mt-1 z-20 w-32 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft py-1">
               {GROUP_OPTIONS.map(opt => (
                 <button
                   key={opt.id}
@@ -212,7 +211,7 @@ export function TransactionList({
         </div>
       </div>
 
-      {/* Count */}
+      {/* ── Count bar ─────────────────────────────────────────────────────── */}
       <div className="px-4 py-1 border-b border-border-light dark:border-border-dark bg-gray-50/50 dark:bg-gray-800/30">
         <span className="text-[10px] text-gray-400 dark:text-gray-500">
           {selectedIds.size > 0
@@ -221,7 +220,7 @@ export function TransactionList({
         </span>
       </div>
 
-      {/* Grouped rows */}
+      {/* ── Grouped rows ──────────────────────────────────────────────────── */}
       {groups.map(([key, txns]) => (
         <div key={key}>
           <div className="sticky top-14 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-border-light dark:border-border-dark flex items-center justify-between">
@@ -242,8 +241,6 @@ export function TransactionList({
               onSelect={onSelect}
               onPatch={onPatch}
               onDelete={onDelete}
-              onDuplicate={onDuplicate}
-              onSplit={onSplit}
             />
           ))}
         </div>
