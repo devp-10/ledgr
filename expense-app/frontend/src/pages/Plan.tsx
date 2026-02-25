@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Plus, Trash2, CreditCard } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { api } from '../lib/api'
-import { DashboardSummary, BudgetCategory, Account } from '../types'
+import { DashboardSummary, BudgetCategory } from '../types'
 import { useBudgets } from '../hooks/useBudgets'
 import { MonthlyOverview } from '../components/plan/MonthlyOverview'
 import { CategoryGroup } from '../components/plan/CategoryGroup'
@@ -33,11 +33,6 @@ export function Plan() {
     deleteGroup,
   } = useBudgets()
 
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [showAddAccount, setShowAddAccount] = useState(false)
-  const [addAccountName, setAddAccountName] = useState('')
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
-
   useEffect(() => {
     setLoading(true)
     api.getDashboard(month)
@@ -45,12 +40,6 @@ export function Plan() {
       .catch(() => addToast('Failed to load dashboard data', 'error'))
       .finally(() => setLoading(false))
   }, [month]) // eslint-disable-line
-
-  useEffect(() => {
-    api.getAccounts()
-      .then(setAccounts)
-      .catch(() => addToast('Failed to load accounts', 'error'))
-  }, []) // eslint-disable-line
 
   const allCategories = groups.flatMap(g => g.categories)
   const totalBudgeted = allCategories.reduce((sum, c) => sum + c.budget_amount, 0)
@@ -82,30 +71,6 @@ export function Plan() {
   const handleDeleteCategory = async (id: string) => {
     await deleteCategory(id)
     addToast('Category deleted', 'info')
-  }
-
-  const handleAddAccount = async () => {
-    if (!addAccountName.trim()) return
-    try {
-      const account = await api.addAccount(addAccountName.trim())
-      setAccounts(prev => [...prev, account].sort((a, b) => a.name.localeCompare(b.name)))
-      setAddAccountName('')
-      setShowAddAccount(false)
-      addToast('Account added', 'success')
-    } catch (e) {
-      addToast(e instanceof Error ? e.message : 'Failed to add account', 'error')
-    }
-  }
-
-  const handleDeleteAccount = async (id: number) => {
-    try {
-      await api.deleteAccount(id)
-      setAccounts(prev => prev.filter(a => a.id !== id))
-      setConfirmDeleteId(null)
-      addToast('Account removed', 'info')
-    } catch {
-      addToast('Failed to remove account', 'error')
-    }
   }
 
   const spendingData = summary?.spending_by_category ?? []
@@ -187,106 +152,6 @@ export function Plan() {
                 <Plus size={14} /> Add Category Group
               </Button>
             )}
-          </div>
-
-          {/* Accounts — styled like a CategoryGroup card */}
-          <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden mt-6">
-            {/* Header */}
-            <div className="flex items-center gap-3 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-b border-border-light dark:border-border-dark">
-              <CreditCard size={13} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-              <span className="flex-1 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                Accounts
-              </span>
-              {!showAddAccount && (
-                <button
-                  onClick={() => setShowAddAccount(true)}
-                  className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
-                >
-                  <Plus size={12} /> Add
-                </button>
-              )}
-            </div>
-
-            {/* Account rows */}
-            {accounts.length === 0 && !showAddAccount && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 px-3 py-3">
-                No accounts yet — add your banks and credit cards.
-              </p>
-            )}
-            {(accounts.length > 0 || showAddAccount) && (
-              <div>
-                {accounts.map(account => (
-                  <div
-                    key={account.id}
-                    className="relative group/acct flex items-center gap-3 py-2 px-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
-                  >
-                    <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{account.name}</span>
-                    {confirmDeleteId === account.id ? (
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-gray-500 dark:text-gray-400">
-                          Unlinks {account.transaction_count} {account.transaction_count === 1 ? 'transaction' : 'transactions'} —
-                        </span>
-                        <button
-                          onClick={() => handleDeleteAccount(account.id)}
-                          className="text-status-negative hover:underline font-medium"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">
-                          {account.transaction_count} {account.transaction_count === 1 ? 'transaction' : 'transactions'}
-                        </span>
-                        <button
-                          onClick={() => {
-                            if (account.transaction_count === 0) handleDeleteAccount(account.id)
-                            else setConfirmDeleteId(account.id)
-                          }}
-                          className="absolute right-2 opacity-0 group-hover/acct:opacity-100 p-1 rounded text-gray-400 hover:text-status-negative transition-all"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                ))}
-
-                {showAddAccount && (
-                  <div className="flex gap-2 px-3 py-2 border-t border-border-light dark:border-border-dark">
-                    <input
-                      autoFocus
-                      value={addAccountName}
-                      onChange={e => setAddAccountName(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleAddAccount()
-                        if (e.key === 'Escape') { setShowAddAccount(false); setAddAccountName('') }
-                      }}
-                      placeholder="e.g. Chase Sapphire, BofA Checking..."
-                      className="flex-1 rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
-                    />
-                    <Button variant="primary" size="sm" onClick={handleAddAccount}>Add</Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setShowAddAccount(false); setAddAccountName('') }}>Cancel</Button>
-                  </div>
-                )}
-
-                {!showAddAccount && (
-                  <button
-                    onClick={() => setShowAddAccount(true)}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-gray-400 dark:text-gray-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors w-full"
-                  >
-                    <Plus size={12} /> Add Account
-                  </button>
-                )}
-              </div>
-            )}
-
           </div>
         </div>
 

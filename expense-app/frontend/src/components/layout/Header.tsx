@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle'
+import { AccountsPopover } from './AccountsPopover'
 import { clsx } from 'clsx'
 
 const TABS = [
@@ -48,6 +49,7 @@ export function Header() {
 
         {/* Right actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          <AccountsPopover />
           <ThemeToggle />
         </div>
       </div>
