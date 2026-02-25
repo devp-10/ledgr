@@ -76,9 +76,28 @@ export const api = {
 
   clearData: () =>
     request<{ message: string }>('/data', { method: 'DELETE' }),
+
+  getAccounts: () =>
+    request<Account[]>('/accounts'),
+
+  addAccount: (name: string) =>
+    request<Account>('/accounts', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+
+  deleteAccount: (id: number) =>
+    request<{ ok: boolean }>(`/accounts/${id}`, { method: 'DELETE' }),
 }
 
 // ─── API Type Definitions ─────────────────────────────────────────────────────
+
+export interface Account {
+  id: number
+  name: string
+  created_at: string
+  transaction_count: number
+}
 
 export interface Transaction {
   id: number
@@ -88,6 +107,7 @@ export interface Transaction {
   amount: number
   category: string | null
   source_file: string | null
+  account_id: number | null
   imported_at: string
   updated_at: string
 }
@@ -110,6 +130,7 @@ export interface UploadPreviewResponse {
 export interface ImportRequest {
   transactions: ParsedTransaction[]
   source_file: string
+  account_id?: number
 }
 
 export interface ImportResponse {
@@ -142,6 +163,7 @@ export interface TransactionFilters {
   date_to?: string
   amount_min?: number | string
   amount_max?: number | string
+  account_id?: number
   sort_by?: string
   sort_dir?: string
 }

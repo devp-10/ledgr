@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
-import { TransactionFilters } from '../../types'
+import { TransactionFilters, Account } from '../../types'
 
 interface AdvancedFiltersProps {
   filters: TransactionFilters
   categories: string[]
+  accounts: Account[]
   onUpdate: (changes: Partial<TransactionFilters>) => void
 }
 
-export function AdvancedFilters({ filters, categories, onUpdate }: AdvancedFiltersProps) {
+export function AdvancedFilters({ filters, categories, accounts, onUpdate }: AdvancedFiltersProps) {
   const [open, setOpen] = useState(false)
 
-  const hasActive = !!(filters.category || filters.date_from || filters.date_to || filters.amount_min || filters.amount_max)
-  const clearAll = () => onUpdate({ category: undefined, date_from: undefined, date_to: undefined, amount_min: undefined, amount_max: undefined })
+  const hasActive = !!(filters.category || filters.date_from || filters.date_to || filters.amount_min || filters.amount_max || filters.account_id)
+  const clearAll = () => onUpdate({ category: undefined, date_from: undefined, date_to: undefined, amount_min: undefined, amount_max: undefined, account_id: undefined })
 
   const inputCls = 'w-full rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500'
   const labelCls = 'text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block'
@@ -32,7 +33,15 @@ export function AdvancedFilters({ filters, categories, onUpdate }: AdvancedFilte
 
       {open && (
         <div className="border-t border-border-light dark:border-border-dark p-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div>
+              <label className={labelCls}>Account</label>
+              <select value={filters.account_id ?? ''} onChange={e => onUpdate({ account_id: e.target.value ? Number(e.target.value) : undefined })} className={inputCls}>
+                <option value="">All accounts</option>
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+
             <div>
               <label className={labelCls}>Category</label>
               <select value={filters.category ?? ''} onChange={e => onUpdate({ category: e.target.value || undefined })} className={inputCls}>

@@ -60,9 +60,9 @@ async def import_transactions(request: ImportRequest, background_tasks: Backgrou
     with get_connection() as conn:
         for t in to_insert:
             cursor = conn.execute(
-                """INSERT OR IGNORE INTO transactions (hash, date, description, amount, source_file)
-                   VALUES (?, ?, ?, ?, ?)""",
-                (t.hash, t.date, t.description, t.amount, request.source_file),
+                """INSERT OR IGNORE INTO transactions (hash, date, description, amount, source_file, account_id)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (t.hash, t.date, t.description, t.amount, request.source_file, request.account_id),
             )
             if cursor.lastrowid:
                 inserted_pairs.append((cursor.lastrowid, t.description))
@@ -146,6 +146,7 @@ def list_transactions(
     date_to: str = Query(None),
     amount_min: float = Query(None),
     amount_max: float = Query(None),
+    account_id: int = Query(None),
     sort_by: str = Query("date"),
     sort_dir: str = Query("desc"),
 ):
@@ -175,6 +176,9 @@ def list_transactions(
     if amount_max is not None:
         where_clauses.append("amount <= ?")
         params.append(amount_max)
+    if account_id is not None:
+        where_clauses.append("account_id = ?")
+        params.append(account_id)
 
     where_sql = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
 

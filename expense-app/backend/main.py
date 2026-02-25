@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import config
 from services.database import init_db
-from routers import transactions, dashboard, reports
+from routers import transactions, dashboard, reports, accounts
 
 
 @asynccontextmanager
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(transactions.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
+app.include_router(accounts.router, prefix="/api")
 
 
 

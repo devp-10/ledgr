@@ -1,5 +1,6 @@
 // Re-export API types from api.ts (source of truth for backend shapes)
 export type {
+  Account,
   Transaction,
   ParsedTransaction,
   UploadPreviewResponse,
