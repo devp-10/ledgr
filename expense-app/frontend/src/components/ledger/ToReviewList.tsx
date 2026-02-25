@@ -65,7 +65,7 @@ function ReviewRow({
         date,
         amount: signed,
         transaction_type: type,
-        category: category || null,
+        category: type === 'expense' ? (category || null) : null,
         notes,
         reviewed: true,
       })
@@ -105,11 +105,9 @@ function ReviewRow({
         <input value={desc} onChange={e => setDesc(e.target.value)} className={inputCls} />
       </div>
 
-      {/* Category */}
+      {/* Category — expense only */}
       <div className={COL.category}>
-        {type === 'transfer' ? (
-          <span className="text-xs text-gray-400 italic">Transfer</span>
-        ) : (
+        {type === 'expense' && (
           <select
             value={category}
             onChange={e => setCat(e.target.value)}

@@ -88,7 +88,7 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
       await onPatch(t.id, {
         date: editDate,
         description: editDesc,
-        category: editCat || null,
+        category: editType === 'expense' ? (editCat || null) : null,
         notes: editNotes,
         transaction_type: editType,
         amount: signed,
@@ -145,11 +145,9 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
           <input value={editDesc} onChange={e => setEditDesc(e.target.value)} className={inputCls} />
         </div>
 
-        {/* Category */}
+        {/* Category — expense only */}
         <div className="w-32 flex-shrink-0">
-          {editType === 'transfer' ? (
-            <span className="text-xs text-gray-400 italic">Transfer</span>
-          ) : (
+          {editType === 'expense' && (
             <select
               value={editCat}
               onChange={e => setEditCat(e.target.value)}
@@ -235,11 +233,9 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{t.description}</p>
       </div>
 
-      {/* Category */}
+      {/* Category — expense only */}
       <div className="relative w-32 flex-shrink-0">
-        {t.transaction_type === 'transfer' ? (
-          <span className="text-xs text-gray-400 dark:text-gray-500 italic">Transfer</span>
-        ) : (
+        {t.transaction_type === 'expense' && (
           <>
             <button
               onClick={() => setEditingCat(e => !e)}

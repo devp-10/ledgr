@@ -45,7 +45,7 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
     setSaving(true)
     try {
       const signedAmount = type === 'expense' ? -Math.abs(rawAmount) : Math.abs(rawAmount)
-      const resolvedCategory = type === 'income' ? 'Income' : (category || undefined)
+      const resolvedCategory = type === 'expense' ? (category || undefined) : undefined
       const resolvedAccount = type === 'transfer' ? (fromAccount !== '' ? Number(fromAccount) : undefined) : (account !== '' ? Number(account) : undefined)
       const resolvedDesc = type === 'transfer' ? `Transfer${fromAccount && toAccount ? '' : ''}` || desc || 'Transfer' : desc
 
@@ -187,7 +187,7 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
           )
         )}
 
-        {/* Category */}
+        {/* Category — expense only */}
         {type === 'expense' && (
           <div>
             <label className={labelCls}>Category</label>
@@ -195,14 +195,6 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
               <option value="">Uncategorized</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-          </div>
-        )}
-        {type === 'income' && (
-          <div>
-            <label className={labelCls}>Category</label>
-            <div className="px-3 py-2 rounded-md border border-border-light dark:border-border-dark bg-emerald-50 dark:bg-emerald-900/10 text-sm text-emerald-700 dark:text-emerald-400">
-              Ready to Assign (auto)
-            </div>
           </div>
         )}
 
