@@ -4,7 +4,6 @@ import { Layout } from './components/layout/Layout'
 import { Plan } from './pages/Plan'
 import { Reflect } from './pages/Reflect'
 import { Ledger } from './pages/Ledger'
-import { Settings } from './pages/Settings'
 import { ToastContainer } from './components/Toast'
 import { useToast } from './hooks/useToast'
 
@@ -24,7 +23,6 @@ export default function App() {
             <Route index element={<Plan />} />
             <Route path="reflect" element={<Reflect />} />
             <Route path="ledger" element={<Ledger />} />
-            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
         <ToastContainer toasts={toasts} onRemove={removeToast} />

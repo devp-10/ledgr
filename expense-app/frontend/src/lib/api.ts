@@ -68,21 +68,6 @@ export const api = {
   getReport: (month: string) =>
     request<MonthlyReport>(`/reports/${month}`),
 
-  getOllamaSettings: () =>
-    request<OllamaSettings>('/settings/ollama'),
-
-  saveOllamaSettings: (settings: OllamaSettings) =>
-    request<{ saved: boolean }>('/settings/ollama', {
-      method: 'POST',
-      body: JSON.stringify(settings),
-    }),
-
-  testOllama: (settings: OllamaSettings) =>
-    request<OllamaTestResult>('/settings/ollama/test', {
-      method: 'POST',
-      body: JSON.stringify(settings),
-    }),
-
   recategorize: () =>
     request<{ job_id: string | null; total: number }>('/transactions/recategorize', { method: 'POST' }),
 
@@ -200,13 +185,4 @@ export interface MonthlyReport {
   top_expenses: Transaction[]
 }
 
-export interface OllamaSettings {
-  url: string
-  model: string
-}
 
-export interface OllamaTestResult {
-  connected: boolean
-  message: string
-  available_models: string[] | null
-}

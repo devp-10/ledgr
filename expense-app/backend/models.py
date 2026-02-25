@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional, List
 from datetime import date, datetime
 
 VALID_CATEGORIES = [
@@ -103,13 +103,3 @@ class MonthlyReport(BaseModel):
     total_spending: float
     total_income: float
 
-
-class OllamaSettings(BaseModel):
-    url: str = ""
-    model: str = ""
-
-
-class OllamaTestResult(BaseModel):
-    connected: bool
-    message: str
-    available_models: Optional[List[str]] = None

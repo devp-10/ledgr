@@ -209,11 +209,6 @@ def update_transaction(transaction_id: int, update: TransactionUpdate):
             raise HTTPException(status_code=404, detail="Transaction not found")
 
         conn.execute(
-            """INSERT INTO category_corrections (description, original_category, corrected_category)
-               VALUES (?, ?, ?)""",
-            (row["description"], row["category"], update.category),
-        )
-        conn.execute(
             "UPDATE transactions SET category=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
             (update.category, transaction_id),
         )
@@ -225,7 +220,7 @@ def update_transaction(transaction_id: int, update: TransactionUpdate):
 @router.get("/categories")
 def list_categories():
     with get_connection() as conn:
-        custom = [r["name"] for r in conn.execute("SELECT name FROM custom_categories ORDER BY name").fetchall()]
+        custom = [r["name"] for r in conn.execute("SELECT name FROM categories ORDER BY name").fetchall()]
     return {"categories": VALID_CATEGORIES + custom, "custom": custom}
 
 
@@ -236,7 +231,7 @@ def add_category(data: dict):
         raise HTTPException(status_code=400, detail="Category name required")
     with get_connection() as conn:
         try:
-            conn.execute("INSERT INTO custom_categories (name) VALUES (?)", (name,))
+            conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
         except Exception:
             raise HTTPException(status_code=409, detail="Category already exists")
     return {"name": name}
@@ -270,6 +265,5 @@ def export_csv():
 def clear_all_data():
     with get_connection() as conn:
         conn.execute("DELETE FROM transactions")
-        conn.execute("DELETE FROM category_corrections")
-        conn.execute("DELETE FROM custom_categories")
+        conn.execute("DELETE FROM categories")
     return {"message": "All data cleared"}

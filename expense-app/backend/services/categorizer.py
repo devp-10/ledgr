@@ -5,8 +5,6 @@ from typing import List, Optional, Callable, Awaitable
 
 import config
 from models import VALID_CATEGORIES
-from services.settings_service import get_ollama_settings
-
 
 def build_prompt(descriptions: List[str]) -> str:
     categories_str = ", ".join(VALID_CATEGORIES)
@@ -59,7 +57,7 @@ async def categorize_transactions(
     descriptions: List[str],
     progress_callback: Optional[Callable[[int, int], Awaitable[None]]] = None,
 ) -> int:
-    url, model = get_ollama_settings()
+    url, model = config.OLLAMA_URL, config.OLLAMA_MODEL
     total = len(transaction_ids)
     completed = 0
 
@@ -83,23 +81,3 @@ async def categorize_transactions(
                 await progress_callback(completed, total)
 
     return completed
-
-
-async def test_connection(url: str, model: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.get(f"{url}/api/tags", timeout=config.TEST_TIMEOUT)
-            resp.raise_for_status()
-            data = resp.json()
-            models = [m["name"] for m in data.get("models", [])]
-            model_available = any(m.startswith(model) for m in models)
-            msg = f"Connected. Model '{model}' {'found' if model_available else 'not found — run: ollama pull ' + model}."
-            return {"connected": True, "message": msg, "available_models": models}
-        except httpx.ConnectError:
-            return {
-                "connected": False,
-                "message": f"Cannot reach Ollama at {url}. Start it with: ollama serve",
-                "available_models": None,
-            }
-        except Exception as e:
-            return {"connected": False, "message": str(e), "available_models": None}
