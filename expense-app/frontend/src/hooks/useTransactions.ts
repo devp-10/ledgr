@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { api, Transaction, TransactionFilters, PaginatedTransactions } from '../lib/api'
+import { api, Transaction, TransactionFilters, TransactionUpdate, PaginatedTransactions } from '../lib/api'
 
 export function useTransactions(initialFilters: TransactionFilters = {}) {
-  const [filters, setFilters] = useState<TransactionFilters>({ page: 1, page_size: 100, ...initialFilters })
+  const [filters, setFilters] = useState<TransactionFilters>({ page: 1, page_size: 200, ...initialFilters })
   const [data, setData] = useState<PaginatedTransactions | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,8 +33,8 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
     })
   }, [load])
 
-  const updateTransaction = useCallback(async (id: number, category: string): Promise<Transaction> => {
-    const updated = await api.updateTransaction(id, category)
+  const patchTransaction = useCallback(async (id: number, update: Partial<TransactionUpdate>): Promise<Transaction> => {
+    const updated = await api.updateTransaction(id, update)
     setData(prev => prev ? {
       ...prev,
       items: prev.items.map(t => t.id === id ? updated : t),
@@ -42,8 +42,26 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
     return updated
   }, [])
 
+  const removeTransaction = useCallback((id: number) => {
+    setData(prev => prev ? {
+      ...prev,
+      items: prev.items.filter(t => t.id !== id),
+      total: prev.total - 1,
+    } : prev)
+  }, [])
+
   const bulkUpdate = useCallback(async (ids: number[], category: string) => {
     await api.bulkUpdateTransactions(ids, category)
+    await load()
+  }, [load])
+
+  const bulkReview = useCallback(async (ids: number[]) => {
+    await api.bulkReviewTransactions(ids)
+    await load()
+  }, [load])
+
+  const bulkDelete = useCallback(async (ids: number[]) => {
+    await api.bulkDeleteTransactions(ids)
     await load()
   }, [load])
 
@@ -56,8 +74,11 @@ export function useTransactions(initialFilters: TransactionFilters = {}) {
     error,
     filters,
     updateFilters,
-    updateTransaction,
+    patchTransaction,
+    removeTransaction,
     bulkUpdate,
+    bulkReview,
+    bulkDelete,
     refetch: load,
   }
 }
