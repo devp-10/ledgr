@@ -86,12 +86,8 @@ def update_group(group_id: str, req: UpdateGroupRequest):
             "UPDATE budget_groups SET name=?, collapsed=? WHERE id=?",
             (new_name, new_collapsed, group_id),
         )
-        return _load_budget(conn).groups  # re-fetch to get categories too
-
-    # Fetch fresh after commit
-    with get_connection() as conn:
-        groups = _load_budget(conn).groups
-        return next((g for g in groups if g.id == group_id), None)
+        budget = _load_budget(conn)
+        return next(g for g in budget.groups if g.id == group_id)
 
 
 @router.delete("/budget/groups/{group_id}")

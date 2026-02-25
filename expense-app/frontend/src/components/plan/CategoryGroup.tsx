@@ -38,12 +38,12 @@ export function CategoryGroup({
       <div className="relative flex items-center gap-3 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-b border-border-light dark:border-border-dark group/header">
         <button
           onClick={() => onToggle(group.id)}
-          className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 w-52 flex-shrink-0 text-left hover:opacity-80 transition-opacity"
         >
           <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">
             {group.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
           </span>
-          <span className="flex-1 min-w-0 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide truncate">
+          <span className="min-w-0 text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide truncate">
             {group.name}
           </span>
         </button>
