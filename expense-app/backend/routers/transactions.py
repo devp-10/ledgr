@@ -13,6 +13,7 @@ from models import (
     BulkUpdateRequest,
     BulkReviewRequest,
     BulkDeleteRequest,
+    BulkCategorizeRequest,
     SplitRequest,
     PaginatedTransactions,
     Transaction,
@@ -173,6 +174,25 @@ async def recategorize_all(background_tasks: BackgroundTasks):
     ids = [r["id"] for r in rows]
     descs = [r["description"] for r in rows]
     job_id = f"recategorize-{ids[0]}"
+    background_tasks.add_task(_run_categorization, job_id, ids, descs)
+    return {"job_id": job_id, "total": len(ids)}
+
+
+@router.post("/transactions/bulk-categorize")
+async def bulk_categorize(request: BulkCategorizeRequest, background_tasks: BackgroundTasks):
+    if not request.ids:
+        return {"job_id": None, "total": 0}
+    placeholders = ",".join("?" * len(request.ids))
+    with get_connection() as conn:
+        rows = conn.execute(
+            f"SELECT id, description FROM transactions WHERE id IN ({placeholders})",
+            request.ids,
+        ).fetchall()
+    if not rows:
+        return {"job_id": None, "total": 0}
+    ids = [r["id"] for r in rows]
+    descs = [r["description"] for r in rows]
+    job_id = f"bulk-categorize-{ids[0]}-{len(ids)}"
     background_tasks.add_task(_run_categorization, job_id, ids, descs)
     return {"job_id": job_id, "total": len(ids)}
 

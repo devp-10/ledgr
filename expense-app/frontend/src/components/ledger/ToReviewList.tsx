@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { Transaction, TransactionType, TransactionUpdate } from '../../types'
 import { EmptyState } from '../common/EmptyState'
-import { CheckCheck, Trash2, CheckSquare } from 'lucide-react'
-import { Button } from '../ui/Button'
+import { CheckSquare, Check, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
-import { format, parseISO } from 'date-fns'
-import { getCategoryColor } from '../ui/Badge'
 
 interface ToReviewListProps {
   transactions: Transaction[]
@@ -19,10 +16,23 @@ interface ToReviewListProps {
   loading?: boolean
 }
 
+// Column widths — must match TransactionRow edit mode exactly
+const COL = {
+  checkbox:    'w-4 flex-shrink-0',
+  date:        'w-[88px] flex-shrink-0',
+  description: 'flex-1 min-w-0',
+  category:    'w-32 flex-shrink-0',
+  notes:       'w-24 flex-shrink-0 hidden lg:block',
+  type:        'w-[84px] flex-shrink-0',
+  amount:      'w-24 flex-shrink-0',
+  actions:     'w-16 flex-shrink-0',
+}
+
+const inputCls = 'w-full text-sm px-1.5 py-0.5 rounded border border-border-light dark:border-border-dark bg-surface dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-accent-500'
+
 function ReviewRow({
   transaction: t,
   categories,
-  accounts,
   selected,
   onSelect,
   onReview,
@@ -30,35 +40,33 @@ function ReviewRow({
 }: {
   transaction: Transaction
   categories: string[]
-  accounts: { id: number; name: string }[]
   selected: boolean
   onSelect: (id: number, checked: boolean) => void
   onReview: (id: number, update: Partial<TransactionUpdate>) => Promise<void>
   onDelete: (id: number) => Promise<void>
 }) {
-  const [type, setType] = useState<TransactionType>(t.transaction_type)
-  const [desc, setDesc] = useState(t.description)
-  const [date, setDate] = useState(t.date)
-  const [amount, setAmount] = useState(String(Math.abs(t.amount)))
-  const [category, setCategory] = useState(t.category ?? '')
-  const [account, setAccount] = useState<number | ''>(t.account_id ?? '')
-  const [saving, setSaving] = useState(false)
+  const [type, setType]       = useState<TransactionType>(t.transaction_type)
+  const [desc, setDesc]       = useState(t.description)
+  const [date, setDate]       = useState(t.date)
+  const [amount, setAmount]   = useState(String(Math.abs(t.amount)))
+  const [category, setCat]    = useState(t.category ?? '')
+  const [notes, setNotes]     = useState(t.notes ?? '')
+  const [saving, setSaving]   = useState(false)
+  const [confirmDel, setConfirmDel] = useState(false)
   const [deleting, setDeleting] = useState(false)
-
-  const inputCls = 'w-full text-xs px-2 py-1 rounded border border-border-light dark:border-border-dark bg-surface dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-accent-500'
 
   const handleReview = async () => {
     setSaving(true)
     try {
-      const rawAmount = parseFloat(amount) || 0
-      const signedAmount = type === 'expense' ? -Math.abs(rawAmount) : Math.abs(rawAmount)
+      const raw = parseFloat(amount) || 0
+      const signed = type === 'expense' ? -Math.abs(raw) : Math.abs(raw)
       await onReview(t.id, {
         description: desc,
         date,
-        amount: signedAmount,
+        amount: signed,
         transaction_type: type,
-        category: category || undefined,
-        account_id: account !== '' ? Number(account) : null,
+        category: category || null,
+        notes,
         reviewed: true,
       })
     } finally {
@@ -72,125 +80,121 @@ function ReviewRow({
     finally { setDeleting(false) }
   }
 
-  const dateLabel = (() => { try { return format(parseISO(t.date), 'MMM d') } catch { return t.date } })()
-
   return (
     <div className={clsx(
-      'border-b border-border-light dark:border-border-dark last:border-0 transition-colors',
-      selected ? 'bg-accent-50 dark:bg-accent-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-white/[0.01]'
+      'flex items-center gap-3 px-4 py-1.5 border-b border-border-light dark:border-border-dark last:border-0',
+      selected ? 'bg-accent-50/60 dark:bg-accent-900/15' : 'bg-amber-50/30 dark:bg-amber-900/5',
     )}>
-      <div className="px-4 py-3 space-y-2.5">
-        {/* Top: checkbox + original info */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={e => onSelect(t.id, e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 cursor-pointer flex-shrink-0"
-          />
-          <span className="text-xs text-gray-400 dark:text-gray-500 w-10 flex-shrink-0">{dateLabel}</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex-1 truncate italic">Imported: {t.description}</span>
-          <span className="text-xs font-money font-semibold text-gray-700 dark:text-gray-300">
-            {t.amount < 0 ? `-$${Math.abs(t.amount).toFixed(2)}` : `+$${t.amount.toFixed(2)}`}
-          </span>
-        </div>
+      {/* Checkbox */}
+      <div className={COL.checkbox}>
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={e => onSelect(t.id, e.target.checked)}
+          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 cursor-pointer"
+        />
+      </div>
 
-        {/* Edit fields */}
-        <div className="ml-6 grid grid-cols-2 lg:grid-cols-5 gap-2">
-          {/* Type */}
-          <div className="col-span-2 lg:col-span-1">
-            <label className="block text-[10px] text-gray-400 mb-0.5">Type</label>
-            <div className="flex gap-1">
-              {(['expense', 'income', 'transfer'] as TransactionType[]).map(tp => (
-                <button
-                  key={tp}
-                  onClick={() => setType(tp)}
-                  className={clsx(
-                    'flex-1 px-1.5 py-1 rounded text-[10px] font-semibold capitalize transition-colors',
-                    type === tp
-                      ? 'bg-accent-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  )}
-                >
-                  {tp.charAt(0).toUpperCase() + tp.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Date */}
+      <div className={COL.date}>
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
+      </div>
 
-          {/* Description */}
-          <div className="col-span-2">
-            <label className="block text-[10px] text-gray-400 mb-0.5">Description</label>
-            <input value={desc} onChange={e => setDesc(e.target.value)} className={inputCls} />
-          </div>
+      {/* Description */}
+      <div className={COL.description}>
+        <input value={desc} onChange={e => setDesc(e.target.value)} className={inputCls} />
+      </div>
 
-          {/* Date */}
-          <div>
-            <label className="block text-[10px] text-gray-400 mb-0.5">Date</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
-          </div>
-
-          {/* Amount */}
-          <div>
-            <label className="block text-[10px] text-gray-400 mb-0.5">Amount</label>
-            <input type="number" step="0.01" min="0" value={amount} onChange={e => setAmount(e.target.value)} className={inputCls} />
-          </div>
-
-          {/* Category (not for transfers) */}
-          {type !== 'transfer' && (
-            <div>
-              <label className="block text-[10px] text-gray-400 mb-0.5">
-                {type === 'income' ? 'Category (Ready to Assign)' : 'Category'}
-              </label>
-              {type === 'income' ? (
-                <div className={clsx('px-2 py-1 rounded text-xs font-medium', getCategoryColor('Income'))}>
-                  Ready to Assign
-                </div>
-              ) : (
-                <select value={category} onChange={e => setCategory(e.target.value)} className={inputCls}>
-                  <option value="">Uncategorized</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              )}
-            </div>
-          )}
-
-          {/* Account */}
-          {accounts.length > 0 && (
-            <div>
-              <label className="block text-[10px] text-gray-400 mb-0.5">Account</label>
-              <select
-                value={account}
-                onChange={e => setAccount(e.target.value !== '' ? Number(e.target.value) : '')}
-                className={inputCls}
-              >
-                <option value="">No account</option>
-                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="ml-6 flex items-center gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            loading={saving}
-            onClick={handleReview}
+      {/* Category */}
+      <div className={COL.category}>
+        {type === 'transfer' ? (
+          <span className="text-xs text-gray-400 italic">Transfer</span>
+        ) : (
+          <select
+            value={category}
+            onChange={e => setCat(e.target.value)}
+            className={clsx(inputCls, 'text-xs')}
           >
-            <CheckCheck size={13} /> Mark as Reviewed
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            loading={deleting}
-            onClick={handleDelete}
-            className="text-red-600 hover:text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
-          >
-            <Trash2 size={13} /> Delete
-          </Button>
-        </div>
+            <option value="">Uncategorized</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )}
+      </div>
+
+      {/* Notes */}
+      <div className={COL.notes}>
+        <input
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Notes..."
+          className={clsx(inputCls, 'text-xs')}
+        />
+      </div>
+
+      {/* Type */}
+      <div className={COL.type}>
+        <select
+          value={type}
+          onChange={e => setType(e.target.value as TransactionType)}
+          className={clsx(inputCls, 'text-xs capitalize')}
+        >
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+          <option value="transfer">Transfer</option>
+        </select>
+      </div>
+
+      {/* Amount */}
+      <div className={COL.amount}>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          value={amount}
+          onChange={e => setAmount(e.target.value)}
+          className={clsx(inputCls, 'text-right')}
+        />
+      </div>
+
+      {/* Actions: confirm review + delete */}
+      <div className={clsx('flex items-center gap-1 justify-end', COL.actions)}>
+        {confirmDel ? (
+          <>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              title="Confirm delete"
+              className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-[10px] font-semibold disabled:opacity-50"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setConfirmDel(false)}
+              title="Cancel"
+              className="p-1 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-[10px] font-semibold"
+            >
+              No
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleReview}
+              disabled={saving}
+              title="Mark as Reviewed"
+              className="p-1 rounded text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors disabled:opacity-50"
+            >
+              <Check size={14} />
+            </button>
+            <button
+              onClick={() => setConfirmDel(true)}
+              title="Delete"
+              className="p-1 rounded text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -198,17 +202,15 @@ function ReviewRow({
 
 function SkeletonRow() {
   return (
-    <div className="px-4 py-3 border-b border-border-light dark:border-border-dark space-y-2">
-      <div className="flex gap-2">
-        <div className="w-4 h-4 skeleton rounded" />
-        <div className="flex-1 h-4 skeleton" />
-        <div className="w-20 h-4 skeleton" />
-      </div>
-      <div className="ml-6 grid grid-cols-4 gap-2">
-        <div className="h-7 skeleton rounded" />
-        <div className="h-7 skeleton rounded col-span-2" />
-        <div className="h-7 skeleton rounded" />
-      </div>
+    <div className="flex items-center gap-3 px-4 py-2 border-b border-border-light dark:border-border-dark">
+      <div className="w-4 h-4 skeleton rounded" />
+      <div className="w-[88px] h-6 skeleton rounded" />
+      <div className="flex-1 h-6 skeleton rounded" />
+      <div className="w-32 h-6 skeleton rounded" />
+      <div className="w-24 h-6 skeleton rounded hidden lg:block" />
+      <div className="w-[84px] h-6 skeleton rounded" />
+      <div className="w-24 h-6 skeleton rounded" />
+      <div className="w-16 h-6 skeleton rounded" />
     </div>
   )
 }
@@ -219,7 +221,7 @@ export function ToReviewList({
   if (loading && !transactions.length) {
     return (
       <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
-        {[1,2,3].map(i => <SkeletonRow key={i} />)}
+        {[1, 2, 3].map(i => <SkeletonRow key={i} />)}
       </div>
     )
   }
@@ -238,24 +240,46 @@ export function ToReviewList({
 
   return (
     <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
-      {/* Header */}
+      {/* Column header — same widths as ReviewRow */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
-        <input
-          type="checkbox"
-          checked={allSelected}
-          onChange={e => onSelectAll(e.target.checked)}
-          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 cursor-pointer"
-        />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-          {selectedIds.size > 0 ? `${selectedIds.size} selected of ${transactions.length}` : `${transactions.length} pending review`}
-        </span>
+        <div className={COL.checkbox}>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={e => onSelectAll(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-500 focus:ring-accent-500 cursor-pointer"
+          />
+        </div>
+        <div className={COL.date}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Date</span>
+        </div>
+        <div className={COL.description}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Description</span>
+        </div>
+        <div className={COL.category}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Category</span>
+        </div>
+        <div className={COL.notes}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Notes</span>
+        </div>
+        <div className={COL.type}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Type</span>
+        </div>
+        <div className={COL.amount}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Amount</span>
+        </div>
+        <div className={COL.actions}>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 text-right block">
+            {selectedIds.size > 0 ? `${selectedIds.size}/${transactions.length}` : `${transactions.length} pending`}
+          </span>
+        </div>
       </div>
+
       {transactions.map(t => (
         <ReviewRow
           key={t.id}
           transaction={t}
           categories={categories}
-          accounts={accounts}
           selected={selectedIds.has(t.id)}
           onSelect={onSelect}
           onReview={onReview}

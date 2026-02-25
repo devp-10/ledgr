@@ -101,6 +101,12 @@ export const api = {
   recategorize: () =>
     request<{ job_id: string | null; total: number }>('/transactions/recategorize', { method: 'POST' }),
 
+  bulkCategorizeAI: (ids: number[]) =>
+    request<{ job_id: string | null; total: number }>('/transactions/bulk-categorize', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
+
   exportCsv: () =>
     fetch(`${BASE}/export`, { method: 'POST' }),
 

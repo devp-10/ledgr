@@ -46,6 +46,7 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
   const [editingCat, setEditingCat] = useState(false)
   const [catSearch, setCatSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -303,23 +304,47 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
         {amt.text}
       </span>
 
-      {/* Actions — only Edit + Delete, visible on hover */}
-      <div className="flex items-center gap-0.5 flex-shrink-0 w-16 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => setEditing(true)}
-          title="Edit"
-          className="p-1 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          <Pencil size={13} />
-        </button>
-        <button
-          onClick={handleDelete}
-          title="Delete"
-          disabled={deleting}
-          className="p-1 rounded text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
-        >
-          <Trash2 size={13} />
-        </button>
+      {/* Actions — Edit + Delete on hover; delete shows inline confirm */}
+      <div className={clsx(
+        'flex items-center gap-0.5 flex-shrink-0 w-16 justify-end transition-opacity',
+        confirmDelete ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+      )}>
+        {confirmDelete ? (
+          <>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              title="Confirm delete"
+              className="p-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-[10px] font-semibold disabled:opacity-50"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              title="Cancel"
+              className="p-1 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-[10px] font-semibold"
+            >
+              No
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setEditing(true)}
+              title="Edit"
+              className="p-1 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Pencil size={13} />
+            </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              title="Delete"
+              className="p-1 rounded text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

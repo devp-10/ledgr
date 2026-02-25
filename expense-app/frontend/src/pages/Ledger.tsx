@@ -45,7 +45,6 @@ export function Ledger() {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
-  const [groupBy, setGroupBy] = useState('date')
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [importOpen, setImportOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -105,7 +104,6 @@ export function Ledger() {
     setSelectedIds(checked ? new Set(active.transactions.map(t => t.id)) : new Set())
   }, [active.transactions])
 
-  // All Transactions: patch category
   const handlePatch = useCallback(async (id: number, update: Partial<TransactionUpdate>) => {
     try {
       await active.patchTransaction(id, update)
@@ -114,7 +112,6 @@ export function Ledger() {
     }
   }, [active, addToast])
 
-  // Delete a single transaction
   const handleDelete = useCallback(async (id: number) => {
     try {
       await api.deleteTransaction(id)
@@ -125,7 +122,6 @@ export function Ledger() {
     }
   }, [active, addToast])
 
-  // Review a single transaction from To Review
   const handleReview = useCallback(async (id: number, update: Partial<TransactionUpdate>) => {
     try {
       await reviewTx.patchTransaction(id, { ...update, reviewed: true })
@@ -137,7 +133,6 @@ export function Ledger() {
     }
   }, [reviewTx, allTx, addToast])
 
-  // Bulk categorize
   const handleBulkCategorize = useCallback(async (category: string) => {
     try {
       await active.bulkUpdate([...selectedIds], category)
@@ -148,7 +143,6 @@ export function Ledger() {
     }
   }, [selectedIds, active, addToast])
 
-  // Bulk review (from To Review view)
   const handleBulkReview = useCallback(async () => {
     try {
       await reviewTx.bulkReview([...selectedIds])
@@ -160,7 +154,6 @@ export function Ledger() {
     }
   }, [selectedIds, reviewTx, allTx, addToast])
 
-  // Bulk delete
   const handleBulkDelete = useCallback(async () => {
     try {
       await active.bulkDelete([...selectedIds])
@@ -171,7 +164,35 @@ export function Ledger() {
     }
   }, [selectedIds, active, addToast])
 
-  // Add transaction manually
+  const handleBulkAICategorize = useCallback(async () => {
+    const ids = [...selectedIds]
+    try {
+      const result = await api.bulkCategorizeAI(ids)
+      if (result.job_id) {
+        // Poll until categorization completes
+        await new Promise<void>(resolve => {
+          const poll = setInterval(async () => {
+            try {
+              const status = await api.getCategorizationStatus(result.job_id!)
+              if (status.status === 'complete' || status.status.startsWith('error')) {
+                clearInterval(poll)
+                resolve()
+              }
+            } catch {
+              clearInterval(poll)
+              resolve()
+            }
+          }, 1000)
+        })
+      }
+      await allTx.refetch()
+      setSelectedIds(new Set())
+      addToast(`AI categorized ${result.total} transaction${result.total !== 1 ? 's' : ''}`, 'success')
+    } catch {
+      addToast('AI categorization failed', 'error')
+    }
+  }, [selectedIds, allTx, addToast])
+
   const handleAdd = useCallback(async (req: Parameters<typeof api.createTransaction>[0]) => {
     try {
       await api.createTransaction(req)
@@ -266,6 +287,7 @@ export function Ledger() {
           onCategorize={handleBulkCategorize}
           onReview={view === 'review' ? handleBulkReview : undefined}
           onDelete={handleBulkDelete}
+          onAICategorize={view === 'all' ? handleBulkAICategorize : undefined}
           onDeselect={() => setSelectedIds(new Set())}
         />
       )}
@@ -285,9 +307,7 @@ export function Ledger() {
           total={allTx.total}
           sortBy={sortBy}
           sortDir={sortDir}
-          groupBy={groupBy}
           onSort={handleSort}
-          onGroupBy={setGroupBy}
         />
       )}
 

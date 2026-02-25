@@ -145,6 +145,10 @@ class BulkDeleteRequest(BaseModel):
     ids: List[int]
 
 
+class BulkCategorizeRequest(BaseModel):
+    ids: List[int]
+
+
 class SplitRequest(BaseModel):
     splits: List[dict]  # [{amount: float, category: str, description: str}]
 
