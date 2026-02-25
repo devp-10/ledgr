@@ -14,37 +14,11 @@ export type {
   DashboardSummary,
   CategoryBreakdown,
   MonthlyReport,
+  BudgetRule,
+  BudgetCategory,
+  BudgetGroup,
+  BudgetResponse,
 } from '../lib/api'
-
-// ─── Budget Types (stored in localStorage) ────────────────────────────────────
-
-export interface BudgetCategory {
-  id: string
-  name: string
-  group: string
-  budgetAmount: number
-  emoji?: string
-  rules?: CategorizationRule[]
-}
-
-export interface BudgetGroup {
-  id: string
-  name: string
-  collapsed: boolean
-}
-
-export interface CategorizationRule {
-  id: string
-  matchType: 'contains' | 'regex' | 'starts_with' | 'ends_with'
-  pattern: string
-  categoryId: string
-}
-
-export interface BudgetState {
-  groups: BudgetGroup[]
-  categories: BudgetCategory[]
-  version: number
-}
 
 // ─── UI Types ────────────────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import config
 from services.database import init_db
-from routers import transactions, dashboard, reports, accounts
+from routers import transactions, dashboard, reports, accounts, budgets
 
 
 @asynccontextmanager
@@ -31,6 +31,7 @@ app.include_router(transactions.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(accounts.router, prefix="/api")
+app.include_router(budgets.router, prefix="/api")
 
 
 
