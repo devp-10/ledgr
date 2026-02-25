@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Check, AlertTriangle, Circle, Pencil, Trash2 } from 'lucide-react'
 import { BudgetCategory } from '../../types'
-import { Progress } from '../ui/Progress'
 import { clsx } from 'clsx'
 
 interface CategoryRowProps {
@@ -47,16 +46,10 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDele
         <span className="flex-1 text-sm text-gray-500 dark:text-gray-400">
           Delete <span className="font-medium text-gray-700 dark:text-gray-300">{category.emoji} {category.name}</span>?
         </span>
-        <button
-          onClick={() => onDelete(category.id)}
-          className="text-xs text-status-negative hover:underline font-medium"
-        >
+        <button onClick={() => onDelete(category.id)} className="text-xs text-status-negative hover:underline font-medium">
           Confirm
         </button>
-        <button
-          onClick={() => setConfirmDelete(false)}
-          className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
+        <button onClick={() => setConfirmDelete(false)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
           Cancel
         </button>
       </div>
@@ -64,7 +57,7 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDele
   }
 
   return (
-    <div className="group/row flex items-center gap-3 py-2 px-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+    <div className="relative group/row flex items-center gap-3 py-2 px-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
       {/* Name */}
       <button
         onClick={() => onOpenModal(category.id)}
@@ -115,7 +108,7 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDele
       </div>
 
       {/* Available (pill) */}
-      <div className="flex-1 flex items-center justify-end gap-2">
+      <div className="w-32 flex-shrink-0 text-right">
         <span
           className={clsx(
             'status-pill',
@@ -124,13 +117,15 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDele
         >
           {formatMoney(available)}
         </span>
-        <button
-          onClick={() => setConfirmDelete(true)}
-          className="opacity-0 group-hover/row:opacity-100 p-1 rounded text-gray-400 hover:text-status-negative transition-all flex-shrink-0"
-        >
-          <Trash2 size={13} />
-        </button>
       </div>
+
+      {/* Trash — absolutely positioned, no layout impact */}
+      <button
+        onClick={() => setConfirmDelete(true)}
+        className="absolute right-2 opacity-0 group-hover/row:opacity-100 p-1 rounded text-gray-400 hover:text-status-negative transition-all"
+      >
+        <Trash2 size={13} />
+      </button>
     </div>
   )
 }

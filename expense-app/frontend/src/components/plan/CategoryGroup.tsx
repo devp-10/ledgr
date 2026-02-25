@@ -35,7 +35,7 @@ export function CategoryGroup({
   return (
     <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden mb-3">
       {/* Group header */}
-      <div className="flex items-center gap-3 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-b border-border-light dark:border-border-dark group/header">
+      <div className="relative flex items-center gap-3 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border-b border-border-light dark:border-border-dark group/header">
         <button
           onClick={() => onToggle(group.id)}
           className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
@@ -53,35 +53,29 @@ export function CategoryGroup({
         <span className="text-xs font-money text-gray-900 dark:text-gray-100 w-28 text-right flex-shrink-0">
           {formatMoney(groupActivity)}
         </span>
-        <span className="text-xs font-money text-gray-500 dark:text-gray-400 flex-1 text-right">
+        <span className="text-xs font-money text-gray-500 dark:text-gray-400 w-32 flex-shrink-0 text-right">
           {formatMoney(groupAvailable)}
         </span>
 
-        {/* Delete group */}
+        {/* Delete — absolutely positioned over the right edge, no layout impact */}
         {confirmDelete ? (
-          <div className="flex items-center gap-2 text-xs ml-2 flex-shrink-0">
+          <div className="absolute right-3 flex items-center gap-2 text-xs bg-gray-100 dark:bg-gray-800 pl-2">
             <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">
               {categories.length > 0
                 ? `Delete + ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}?`
                 : 'Delete group?'}
             </span>
-            <button
-              onClick={() => onDeleteGroup(group.id)}
-              className="text-status-negative hover:underline font-medium"
-            >
+            <button onClick={() => onDeleteGroup(group.id)} className="text-status-negative hover:underline font-medium">
               Confirm
             </button>
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
+            <button onClick={() => setConfirmDelete(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               Cancel
             </button>
           </div>
         ) : (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="opacity-0 group-hover/header:opacity-100 ml-1 p-1 rounded text-gray-400 hover:text-status-negative transition-all flex-shrink-0"
+            className="absolute right-2 opacity-0 group-hover/header:opacity-100 p-1 rounded text-gray-400 hover:text-status-negative transition-all"
           >
             <Trash2 size={13} />
           </button>
