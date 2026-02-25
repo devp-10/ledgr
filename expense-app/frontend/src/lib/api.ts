@@ -88,6 +88,40 @@ export const api = {
 
   deleteAccount: (id: number) =>
     request<{ ok: boolean }>(`/accounts/${id}`, { method: 'DELETE' }),
+
+  // Budget
+  getBudget: () =>
+    request<BudgetResponse>('/budget'),
+
+  createGroup: (name: string) =>
+    request<BudgetGroup>('/budget/groups', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+
+  updateGroup: (id: string, data: { name?: string; collapsed?: boolean }) =>
+    request<BudgetGroup>(`/budget/groups/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteGroup: (id: string) =>
+    request<{ ok: boolean }>(`/budget/groups/${id}`, { method: 'DELETE' }),
+
+  createCategory: (data: { name: string; group_id: string; budget_amount: number; emoji: string }) =>
+    request<BudgetCategory>('/budget/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateCategory: (id: string, data: Partial<{ name: string; group_id: string; budget_amount: number; emoji: string; rules: BudgetRule[] }>) =>
+    request<BudgetCategory>(`/budget/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteCategory: (id: string) =>
+    request<{ ok: boolean }>(`/budget/categories/${id}`, { method: 'DELETE' }),
 }
 
 // ─── API Type Definitions ─────────────────────────────────────────────────────
@@ -207,4 +241,29 @@ export interface MonthlyReport {
   top_expenses: Transaction[]
 }
 
+export interface BudgetRule {
+  id: string
+  match_type: string
+  pattern: string
+  category_id: string
+}
 
+export interface BudgetCategory {
+  id: string
+  name: string
+  group_id: string
+  budget_amount: number
+  emoji: string
+  rules: BudgetRule[]
+}
+
+export interface BudgetGroup {
+  id: string
+  name: string
+  collapsed: boolean
+  categories: BudgetCategory[]
+}
+
+export interface BudgetResponse {
+  groups: BudgetGroup[]
+}

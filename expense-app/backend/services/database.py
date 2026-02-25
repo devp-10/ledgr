@@ -31,10 +31,55 @@ CREATE TABLE IF NOT EXISTS categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS budget_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    collapsed INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS budget_categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    group_id TEXT NOT NULL REFERENCES budget_groups(id) ON DELETE CASCADE,
+    budget_amount REAL NOT NULL DEFAULT 0,
+    emoji TEXT DEFAULT '📦',
+    sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS budget_rules (
+    id TEXT PRIMARY KEY,
+    category_id TEXT NOT NULL REFERENCES budget_categories(id) ON DELETE CASCADE,
+    match_type TEXT NOT NULL,
+    pattern TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category);
 CREATE INDEX IF NOT EXISTS idx_transactions_hash ON transactions(hash);
 """
+
+DEFAULT_BUDGET_GROUPS = [
+    ("bills",         "Bills & Utilities",  0, 0),
+    ("lifestyle",     "Lifestyle",          0, 1),
+    ("transport",     "Transportation",     0, 2),
+    ("health",        "Health & Wellness",  1, 3),
+    ("subscriptions", "Subscriptions",      1, 4),
+    ("shopping",      "Shopping",           1, 5),
+    ("savings",       "Savings & Goals",    1, 6),
+]
+
+DEFAULT_BUDGET_CATEGORIES = [
+    ("rent",          "Housing",              "bills",         1500, "🏠", 0),
+    ("utilities",     "Utilities",            "bills",          150, "⚡", 1),
+    ("internet",      "Subscriptions",        "bills",          100, "📡", 2),
+    ("groceries",     "Groceries",            "lifestyle",      500, "🛒", 0),
+    ("dining",        "Dining & Restaurants", "lifestyle",      200, "🍽️", 1),
+    ("entertainment", "Entertainment",        "lifestyle",      100, "🎬", 2),
+    ("transport_cat", "Transportation",       "transport",      200, "🚗", 0),
+    ("healthcare",    "Healthcare",           "health",         150, "❤️", 0),
+    ("shopping_cat",  "Shopping",             "shopping",       300, "🛍️", 0),
+]
 
 
 def init_db():
@@ -46,6 +91,17 @@ def init_db():
         if "account_id" not in cols:
             conn.execute(
                 "ALTER TABLE transactions ADD COLUMN account_id INTEGER REFERENCES accounts(id)"
+            )
+        # Seed budget defaults if tables are empty
+        count = conn.execute("SELECT COUNT(*) FROM budget_groups").fetchone()[0]
+        if count == 0:
+            conn.executemany(
+                "INSERT OR IGNORE INTO budget_groups (id, name, collapsed, sort_order) VALUES (?,?,?,?)",
+                DEFAULT_BUDGET_GROUPS,
+            )
+            conn.executemany(
+                "INSERT OR IGNORE INTO budget_categories (id, name, group_id, budget_amount, emoji, sort_order) VALUES (?,?,?,?,?,?)",
+                DEFAULT_BUDGET_CATEGORIES,
             )
 
 

@@ -1,95 +1,129 @@
-import { useState, useCallback } from 'react'
-import { BudgetState, BudgetGroup, BudgetCategory } from '../types'
-
-const STORAGE_KEY = 'ledgr_budget_v1'
-
-const DEFAULT_GROUPS: BudgetGroup[] = [
-  { id: 'bills', name: 'Bills & Utilities', collapsed: false },
-  { id: 'lifestyle', name: 'Lifestyle', collapsed: false },
-  { id: 'transport', name: 'Transportation', collapsed: false },
-  { id: 'health', name: 'Health & Wellness', collapsed: true },
-  { id: 'subscriptions', name: 'Subscriptions', collapsed: true },
-  { id: 'shopping', name: 'Shopping', collapsed: true },
-  { id: 'savings', name: 'Savings & Goals', collapsed: true },
-]
-
-const DEFAULT_CATEGORIES: BudgetCategory[] = [
-  { id: 'rent', name: 'Housing', group: 'bills', budgetAmount: 1500, emoji: '🏠' },
-  { id: 'utilities', name: 'Utilities', group: 'bills', budgetAmount: 150, emoji: '⚡' },
-  { id: 'internet', name: 'Subscriptions', group: 'bills', budgetAmount: 100, emoji: '📡' },
-  { id: 'groceries', name: 'Groceries', group: 'lifestyle', budgetAmount: 500, emoji: '🛒' },
-  { id: 'dining', name: 'Dining & Restaurants', group: 'lifestyle', budgetAmount: 200, emoji: '🍽️' },
-  { id: 'entertainment', name: 'Entertainment', group: 'lifestyle', budgetAmount: 100, emoji: '🎬' },
-  { id: 'transport', name: 'Transportation', group: 'transport', budgetAmount: 200, emoji: '🚗' },
-  { id: 'healthcare', name: 'Healthcare', group: 'health', budgetAmount: 150, emoji: '❤️' },
-  { id: 'shopping', name: 'Shopping', group: 'shopping', budgetAmount: 300, emoji: '🛍️' },
-]
-
-function loadState(): BudgetState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {}
-  return { groups: DEFAULT_GROUPS, categories: DEFAULT_CATEGORIES, version: 1 }
-}
-
-function saveState(state: BudgetState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-}
+import { useState, useCallback, useEffect } from 'react'
+import { api } from '../lib/api'
+import { BudgetGroup, BudgetCategory, BudgetRule } from '../types'
 
 export function useBudgets() {
-  const [state, setState] = useState<BudgetState>(loadState)
+  const [groups, setGroups] = useState<BudgetGroup[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const update = useCallback((updater: (s: BudgetState) => BudgetState) => {
-    setState(prev => {
-      const next = updater(prev)
-      saveState(next)
-      return next
-    })
+  const reload = useCallback(async () => {
+    try {
+      const data = await api.getBudget()
+      setGroups(data.groups)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load budget')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  const toggleGroup = useCallback((groupId: string) => {
-    update(s => ({
-      ...s,
-      groups: s.groups.map(g => g.id === groupId ? { ...g, collapsed: !g.collapsed } : g),
-    }))
-  }, [update])
+  useEffect(() => { reload() }, [reload])
 
-  const updateBudget = useCallback((categoryId: string, amount: number) => {
-    update(s => ({
-      ...s,
-      categories: s.categories.map(c => c.id === categoryId ? { ...c, budgetAmount: amount } : c),
-    }))
-  }, [update])
+  const toggleGroup = useCallback(async (groupId: string) => {
+    const group = groups.find(g => g.id === groupId)
+    if (!group) return
+    // Optimistic update
+    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, collapsed: !g.collapsed } : g))
+    try {
+      await api.updateGroup(groupId, { collapsed: !group.collapsed })
+    } catch {
+      // Revert on failure
+      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, collapsed: group.collapsed } : g))
+    }
+  }, [groups])
 
-  const addCategory = useCallback((cat: BudgetCategory) => {
-    update(s => ({ ...s, categories: [...s.categories, cat] }))
-  }, [update])
+  const updateBudget = useCallback(async (categoryId: string, amount: number) => {
+    // Optimistic update
+    setGroups(prev => prev.map(g => ({
+      ...g,
+      categories: g.categories.map(c => c.id === categoryId ? { ...c, budget_amount: amount } : c),
+    })))
+    try {
+      await api.updateCategory(categoryId, { budget_amount: amount })
+    } catch {
+      reload()
+    }
+  }, [reload])
 
-  const updateCategory = useCallback((id: string, changes: Partial<BudgetCategory>) => {
-    update(s => ({
-      ...s,
-      categories: s.categories.map(c => c.id === id ? { ...c, ...changes } : c),
-    }))
-  }, [update])
+  const addCategory = useCallback(async (groupId: string): Promise<BudgetCategory | null> => {
+    try {
+      const cat = await api.createCategory({
+        name: 'New Category',
+        group_id: groupId,
+        budget_amount: 0,
+        emoji: '📦',
+      })
+      setGroups(prev => prev.map(g =>
+        g.id === groupId ? { ...g, categories: [...g.categories, cat] } : g
+      ))
+      return cat
+    } catch {
+      return null
+    }
+  }, [])
 
-  const deleteCategory = useCallback((id: string) => {
-    update(s => ({ ...s, categories: s.categories.filter(c => c.id !== id) }))
-  }, [update])
+  const updateCategory = useCallback(async (id: string, changes: Partial<{
+    name: string; group_id: string; budget_amount: number; emoji: string; rules: BudgetRule[]
+  }>) => {
+    try {
+      const updated = await api.updateCategory(id, changes)
+      if (changes.group_id) {
+        // Group changed — reload to correctly move category
+        await reload()
+      } else {
+        setGroups(prev => prev.map(g => ({
+          ...g,
+          categories: g.categories.map(c => c.id === id ? updated : c),
+        })))
+      }
+    } catch {
+      reload()
+    }
+  }, [reload])
 
-  const addGroup = useCallback((name: string) => {
-    const id = name.toLowerCase().replace(/\s+/g, '-')
-    update(s => ({ ...s, groups: [...s.groups, { id, name, collapsed: false }] }))
-  }, [update])
+  const deleteCategory = useCallback(async (id: string) => {
+    setGroups(prev => prev.map(g => ({
+      ...g,
+      categories: g.categories.filter(c => c.id !== id),
+    })))
+    try {
+      await api.deleteCategory(id)
+    } catch {
+      reload()
+    }
+  }, [reload])
+
+  const addGroup = useCallback(async (name: string) => {
+    try {
+      const group = await api.createGroup(name)
+      setGroups(prev => [...prev, group])
+    } catch {
+      reload()
+    }
+  }, [reload])
+
+  const deleteGroup = useCallback(async (id: string) => {
+    setGroups(prev => prev.filter(g => g.id !== id))
+    try {
+      await api.deleteGroup(id)
+    } catch {
+      reload()
+    }
+  }, [reload])
 
   return {
-    groups: state.groups,
-    categories: state.categories,
+    groups,
+    loading,
+    error,
+    reload,
     toggleGroup,
     updateBudget,
     addCategory,
     updateCategory,
     deleteCategory,
     addGroup,
+    deleteGroup,
   }
 }

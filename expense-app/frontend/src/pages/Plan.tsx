@@ -20,7 +20,17 @@ export function Plan() {
   const [addGroupName, setAddGroupName] = useState('')
   const [showAddGroup, setShowAddGroup] = useState(false)
 
-  const { groups, categories, toggleGroup, updateBudget, addCategory, updateCategory, deleteCategory, addGroup } = useBudgets()
+  const {
+    groups,
+    loading: budgetLoading,
+    toggleGroup,
+    updateBudget,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    addGroup,
+    deleteGroup,
+  } = useBudgets()
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showAddAccount, setShowAddAccount] = useState(false)
@@ -41,22 +51,36 @@ export function Plan() {
       .catch(() => addToast('Failed to load accounts', 'error'))
   }, []) // eslint-disable-line
 
-  const totalBudgeted = categories.reduce((sum, c) => sum + c.budgetAmount, 0)
-  const selectedCategory = categories.find(c => c.id === selectedCategoryId) ?? null
+  const allCategories = groups.flatMap(g => g.categories)
+  const totalBudgeted = allCategories.reduce((sum, c) => sum + c.budget_amount, 0)
+  const selectedCategory = allCategories.find(c => c.id === selectedCategoryId) ?? null
 
-  const handleAddCategory = (groupId: string) => {
-    const id = `cat-${Date.now()}`
-    addCategory({ id, name: 'New Category', group: groupId, budgetAmount: 100, emoji: '📦', rules: [] })
-    setSelectedCategoryId(id)
-    addToast('Category added', 'success')
+  const handleAddCategory = async (groupId: string) => {
+    const cat = await addCategory(groupId)
+    if (cat) {
+      setSelectedCategoryId(cat.id)
+      addToast('Category added', 'success')
+    } else {
+      addToast('Failed to add category', 'error')
+    }
   }
 
-  const handleAddGroup = () => {
+  const handleAddGroup = async () => {
     if (!addGroupName.trim()) return
-    addGroup(addGroupName.trim())
+    await addGroup(addGroupName.trim())
     setAddGroupName('')
     setShowAddGroup(false)
     addToast('Group added', 'success')
+  }
+
+  const handleDeleteGroup = async (id: string) => {
+    await deleteGroup(id)
+    addToast('Group deleted', 'info')
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    await deleteCategory(id)
+    addToast('Category deleted', 'info')
   }
 
   const handleAddAccount = async () => {
@@ -88,9 +112,6 @@ export function Plan() {
       {/* Month selector */}
       <div className="flex items-center justify-between">
         <MonthPicker value={month} onChange={setMonth} />
-        <p className="text-xs text-gray-400 dark:text-gray-500">
-          Budget targets are stored locally
-        </p>
       </div>
 
       {/* Monthly overview */}
@@ -105,27 +126,34 @@ export function Plan() {
         <div className="w-52 flex-shrink-0">Category</div>
         <div className="w-28 flex-shrink-0 text-right">Assigned</div>
         <div className="w-28 flex-shrink-0 text-right">Activity</div>
-        <div className="w-32 flex-shrink-0 text-right">Available</div>
+        <div className="flex-1 text-right">Available</div>
       </div>
 
       {/* Category groups */}
-      <div className="space-y-0">
-        {groups.map(group => {
-          const groupCats = categories.filter(c => c.group === group.id)
-          return (
+      {budgetLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="rounded-lg border border-border-light dark:border-border-dark h-12 bg-gray-100 dark:bg-gray-800 animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-0">
+          {groups.map(group => (
             <CategoryGroup
               key={group.id}
               group={group}
-              categories={groupCats}
+              categories={group.categories}
               spendingData={summary?.spending_by_category ?? []}
               onToggle={toggleGroup}
               onEditBudget={updateBudget}
               onOpenModal={setSelectedCategoryId}
               onAddCategory={handleAddCategory}
+              onDeleteGroup={handleDeleteGroup}
+              onDeleteCategory={handleDeleteCategory}
             />
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add group */}
       <div>
@@ -217,7 +245,7 @@ export function Plan() {
                 onChange={e => setAddAccountName(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter') handleAddAccount()
-                  if (e.key === 'Escape') setShowAddAccount(false)
+                  if (e.key === 'Escape') { setShowAddAccount(false); setAddAccountName('') }
                 }}
                 placeholder="e.g. Chase Sapphire, BofA Checking..."
                 className="flex-1 rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
