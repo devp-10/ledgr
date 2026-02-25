@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional, List
 from datetime import date, datetime
 
 VALID_CATEGORIES = [
@@ -24,6 +24,17 @@ VALID_CATEGORIES = [
 ]
 
 
+class Account(BaseModel):
+    id: int
+    name: str
+    created_at: str
+    transaction_count: int = 0
+
+
+class CreateAccountRequest(BaseModel):
+    name: str
+
+
 class Transaction(BaseModel):
     id: int
     hash: str
@@ -32,6 +43,7 @@ class Transaction(BaseModel):
     amount: float
     category: Optional[str] = None
     source_file: Optional[str] = None
+    account_id: Optional[int] = None
     imported_at: str
     updated_at: str
 
@@ -62,6 +74,7 @@ class UploadPreviewResponse(BaseModel):
 class ImportRequest(BaseModel):
     transactions: List[ParsedTransaction]
     source_file: str
+    account_id: Optional[int] = None
 
 
 class ImportResponse(BaseModel):
@@ -103,13 +116,3 @@ class MonthlyReport(BaseModel):
     total_spending: float
     total_income: float
 
-
-class OllamaSettings(BaseModel):
-    url: str = ""
-    model: str = ""
-
-
-class OllamaTestResult(BaseModel):
-    connected: bool
-    message: str
-    available_models: Optional[List[str]] = None

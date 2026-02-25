@@ -10,7 +10,8 @@ import { TransactionList } from '../components/ledger/TransactionList'
 import { BulkActions } from '../components/ledger/BulkActions'
 import { ImportModal } from '../components/ledger/ImportModal'
 import { Button } from '../components/ui/Button'
-import { QuickFilter } from '../types'
+import { QuickFilter, Account } from '../types'
+import { api } from '../lib/api'
 import { useToastContext } from '../App'
 
 function getDateRange(filter: QuickFilter): { date_from?: string; date_to?: string } {
@@ -38,6 +39,11 @@ export function Ledger() {
   })
 
   const { categories } = useCategories()
+  const [accounts, setAccounts] = useState<Account[]>([])
+
+  useEffect(() => {
+    api.getAccounts().then(setAccounts).catch(() => {})
+  }, []) // eslint-disable-line
 
   // Debounced search
   useEffect(() => {
@@ -104,6 +110,7 @@ export function Ledger() {
       <AdvancedFilters
         filters={filters}
         categories={categories}
+        accounts={accounts}
         onUpdate={updateFilters}
       />
 

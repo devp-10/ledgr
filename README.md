@@ -12,7 +12,7 @@ A single-user expense tracking web app that analyzes bank statements using a loc
 
 ## Running the App
 
-### Option A — Docker (recommended, no installs required)
+### Docker
 
 The only requirement is [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
@@ -25,46 +25,17 @@ Then open **http://localhost:3000**.
 That's it. Docker handles Python, Node.js, and Ollama — nothing else needs to be installed.
 
 > **First run** downloads `mistral` (~4 GB) and builds the images — takes a few minutes.
-> Subsequent `docker compose up` starts in seconds; the model and database are cached in Docker volumes.
+> Subsequent `docker compose up` starts in seconds; the model is cached in a Docker volume.
 
 **Stop the app:**
 ```bash
 docker compose down
 ```
 
-**Wipe all data** (transactions + downloaded model weights):
+**Wipe downloaded model weights** (database is unaffected):
 ```bash
 docker compose down -v
 ```
-
----
-
-### Option B — Run locally (requires Python, Node, Ollama installed)
-
-<details>
-<summary>Expand for manual setup</summary>
-
-**Prerequisites**: Python 3.11+, Node.js 18+, [Ollama](https://ollama.ai)
-
-```bash
-# Terminal 1 — Ollama
-ollama serve
-ollama pull mistral
-
-# Terminal 2 — Backend
-cd expense-app/backend
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-
-# Terminal 3 — Frontend
-cd expense-app/frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:5173
-
-</details>
 
 ---
 
@@ -82,9 +53,9 @@ Open http://localhost:5173
 
 ## Data
 
-- **Database**: SQLite, stored in a Docker volume (`db_data`). Survives `docker compose down`; wiped by `docker compose down -v`.
+- **Database**: SQLite, stored at `./data/expenses.db` in the repo directory on your machine. Persists across all Docker operations including `docker compose down -v`.
 - **Deduplication**: Transactions are hashed by `date + description + amount` — re-uploading the same file is safe.
-- **Model weights**: Cached in `ollama_data` Docker volume (~2 GB, downloaded once).
+- **Model weights**: Cached in `ollama_data` Docker volume (~2 GB, downloaded once). Wiped by `docker compose down -v`.
 
 ## API Docs
 

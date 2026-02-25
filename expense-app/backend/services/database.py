@@ -7,6 +7,12 @@ import config
 DB_PATH = config.DB_PATH
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     hash TEXT UNIQUE,
@@ -19,23 +25,10 @@ CREATE TABLE IF NOT EXISTS transactions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS category_corrections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    description TEXT NOT NULL,
-    original_category TEXT,
-    corrected_category TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS custom_categories (
+CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
@@ -48,6 +41,12 @@ def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with get_connection() as conn:
         conn.executescript(SCHEMA)
+        # Migration: add account_id column to transactions if it doesn't exist
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(transactions)").fetchall()]
+        if "account_id" not in cols:
+            conn.execute(
+                "ALTER TABLE transactions ADD COLUMN account_id INTEGER REFERENCES accounts(id)"
+            )
 
 
 @contextmanager

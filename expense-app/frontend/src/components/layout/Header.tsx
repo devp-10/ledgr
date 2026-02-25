@@ -1,4 +1,3 @@
-import { Settings } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle'
 import { clsx } from 'clsx'
@@ -11,7 +10,6 @@ const TABS = [
 
 export function Header() {
   const location = useLocation()
-  const isSettings = location.pathname === '/settings'
   const isMainTab = TABS.some(t => t.end ? location.pathname === t.to : location.pathname.startsWith(t.to))
 
   return (
@@ -51,18 +49,6 @@ export function Header() {
         {/* Right actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <ThemeToggle />
-          <Link
-            to="/settings"
-            aria-label="Settings"
-            className={clsx(
-              'p-2 rounded-md transition-colors',
-              isSettings
-                ? 'text-accent-600 dark:text-accent-400 bg-accent-500/10'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
-            )}
-          >
-            <Settings size={18} />
-          </Link>
         </div>
       </div>
     </header>

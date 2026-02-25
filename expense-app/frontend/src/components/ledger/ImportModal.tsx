@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, CheckSquare } from 'lucide-react'
+import { Upload, FileText, CheckSquare, Plus } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Progress } from '../ui/Progress'
-import { api, UploadPreviewResponse } from '../../lib/api'
+import { api, UploadPreviewResponse, Account } from '../../lib/api'
 import { POLL_INTERVAL_MS } from '../../constants'
 import { useToastContext } from '../../App'
 
@@ -26,6 +26,16 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
   const [progressMsg, setProgressMsg] = useState('')
   const [uploading, setUploading] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined)
+  const [showNewAccount, setShowNewAccount] = useState(false)
+  const [newAccountName, setNewAccountName] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      api.getAccounts().then(setAccounts).catch(() => {})
+    }
+  }, [open])
 
   const reset = () => {
     setStep('upload')
@@ -34,6 +44,23 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
     setProgressMsg('')
     setUploading(false)
     setFileName('')
+    setSelectedAccountId(undefined)
+    setShowNewAccount(false)
+    setNewAccountName('')
+  }
+
+  const handleCreateAccount = async () => {
+    const name = newAccountName.trim()
+    if (!name) return
+    try {
+      const account = await api.addAccount(name)
+      setAccounts(prev => [...prev, account].sort((a, b) => a.name.localeCompare(b.name)))
+      setSelectedAccountId(account.id)
+      setNewAccountName('')
+      setShowNewAccount(false)
+    } catch (e) {
+      addToast(e instanceof Error ? e.message : 'Failed to create account', 'error')
+    }
   }
 
   const handleClose = () => { reset(); onClose() }
@@ -71,6 +98,7 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
       const result = await api.importTransactions({
         transactions: preview.transactions,
         source_file: fileName,
+        account_id: selectedAccountId,
       })
 
       if (autoCategorize && result.job_id) {
@@ -195,6 +223,50 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
                 <p className="text-xs text-gray-400 px-3 py-2 border-t border-gray-100 dark:border-gray-700">
                   Showing 3 of {preview.total_rows} transactions
                 </p>
+              )}
+            </div>
+
+            {/* Account selector */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                Account <span className="font-normal text-gray-400">(optional)</span>
+              </label>
+              {showNewAccount ? (
+                <div className="flex gap-2">
+                  <input
+                    autoFocus
+                    value={newAccountName}
+                    onChange={e => setNewAccountName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleCreateAccount()
+                      if (e.key === 'Escape') setShowNewAccount(false)
+                    }}
+                    placeholder="Account name..."
+                    className="flex-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  />
+                  <Button variant="primary" size="sm" onClick={handleCreateAccount}>Save</Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setShowNewAccount(false); setNewAccountName('') }}>Cancel</Button>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={selectedAccountId ?? ''}
+                    onChange={e => setSelectedAccountId(e.target.value ? Number(e.target.value) : undefined)}
+                    className="flex-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  >
+                    <option value="">No account</option>
+                    {accounts.map(a => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setShowNewAccount(true)}
+                    title="Add new account"
+                    className="w-8 h-8 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:border-primary-400 transition-colors"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
               )}
             </div>
 
