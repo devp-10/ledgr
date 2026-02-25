@@ -80,6 +80,9 @@ VALID_CATEGORIES = [
 ]
 
 
+TRANSACTION_TYPES = ["expense", "income", "transfer"]
+
+
 class Account(BaseModel):
     id: int
     name: str
@@ -98,6 +101,10 @@ class Transaction(BaseModel):
     description: str
     amount: float
     category: Optional[str] = None
+    transaction_type: str = "expense"
+    notes: str = ""
+    reviewed: bool = True
+    linked_transaction_id: Optional[int] = None
     source_file: Optional[str] = None
     account_id: Optional[int] = None
     imported_at: str
@@ -105,12 +112,41 @@ class Transaction(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
-    category: str
+    category: Optional[str] = None
+    transaction_type: Optional[str] = None
+    description: Optional[str] = None
+    date: Optional[str] = None
+    amount: Optional[float] = None
+    notes: Optional[str] = None
+    reviewed: Optional[bool] = None
+    account_id: Optional[int] = None
+
+
+class CreateTransactionRequest(BaseModel):
+    date: str
+    description: str
+    amount: float
+    transaction_type: str = "expense"
+    category: Optional[str] = None
+    account_id: Optional[int] = None
+    notes: str = ""
 
 
 class BulkUpdateRequest(BaseModel):
     ids: List[int]
     category: str
+
+
+class BulkReviewRequest(BaseModel):
+    ids: List[int]
+
+
+class BulkDeleteRequest(BaseModel):
+    ids: List[int]
+
+
+class SplitRequest(BaseModel):
+    splits: List[dict]  # [{amount: float, category: str, description: str}]
 
 
 class ParsedTransaction(BaseModel):
@@ -131,6 +167,7 @@ class ImportRequest(BaseModel):
     transactions: List[ParsedTransaction]
     source_file: str
     account_id: Optional[int] = None
+    auto_categorize: bool = True
 
 
 class ImportResponse(BaseModel):

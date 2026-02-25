@@ -20,7 +20,12 @@ CREATE TABLE IF NOT EXISTS transactions (
     description TEXT NOT NULL,
     amount REAL NOT NULL,
     category TEXT,
+    transaction_type TEXT NOT NULL DEFAULT 'expense',
+    notes TEXT NOT NULL DEFAULT '',
+    reviewed INTEGER NOT NULL DEFAULT 1,
+    linked_transaction_id INTEGER REFERENCES transactions(id),
     source_file TEXT,
+    account_id INTEGER REFERENCES accounts(id),
     imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -86,12 +91,20 @@ def init_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with get_connection() as conn:
         conn.executescript(SCHEMA)
-        # Migration: add account_id column to transactions if it doesn't exist
+        # Migrations: add columns to transactions if they don't exist
         cols = [r["name"] for r in conn.execute("PRAGMA table_info(transactions)").fetchall()]
         if "account_id" not in cols:
             conn.execute(
                 "ALTER TABLE transactions ADD COLUMN account_id INTEGER REFERENCES accounts(id)"
             )
+        if "transaction_type" not in cols:
+            conn.execute("ALTER TABLE transactions ADD COLUMN transaction_type TEXT NOT NULL DEFAULT 'expense'")
+        if "notes" not in cols:
+            conn.execute("ALTER TABLE transactions ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
+        if "reviewed" not in cols:
+            conn.execute("ALTER TABLE transactions ADD COLUMN reviewed INTEGER NOT NULL DEFAULT 1")
+        if "linked_transaction_id" not in cols:
+            conn.execute("ALTER TABLE transactions ADD COLUMN linked_transaction_id INTEGER REFERENCES transactions(id)")
         # Seed budget defaults if tables are empty
         count = conn.execute("SELECT COUNT(*) FROM budget_groups").fetchone()[0]
         if count == 0:
