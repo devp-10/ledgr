@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react'
 import { api } from '../lib/api'
 import { DashboardSummary, BudgetCategory } from '../types'
 import { useBudgets } from '../hooks/useBudgets'
-import { MonthlyOverview } from '../components/plan/MonthlyOverview'
 import { CategoryGroup } from '../components/plan/CategoryGroup'
 import { CategoryModal } from '../components/plan/CategoryModal'
 import { PlanCharts } from '../components/plan/PlanCharts'
@@ -42,7 +41,6 @@ export function Plan() {
   }, [month]) // eslint-disable-line
 
   const allCategories = groups.flatMap(g => g.categories)
-  const totalBudgeted = allCategories.reduce((sum, c) => sum + c.budget_amount, 0)
   const selectedCategory = allCategories.find(c => c.id === selectedCategoryId) ?? null
 
   const handleAddCategory = async (groupId: string) => {
@@ -82,13 +80,6 @@ export function Plan() {
       <div className="flex items-center justify-between">
         <MonthPicker value={month} onChange={setMonth} />
       </div>
-
-      {/* Monthly overview — full width */}
-      <MonthlyOverview
-        summary={summary}
-        totalBudgeted={totalBudgeted}
-        loading={loading}
-      />
 
       {/* Two-column body: budget table (2/3) + charts (1/3) */}
       <div className="grid grid-cols-3 gap-6 items-start">
