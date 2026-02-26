@@ -3,9 +3,9 @@ import { QuickFilter } from '../../types'
 
 const FILTERS: { id: QuickFilter; label: string }[] = [
   { id: 'this-month', label: 'This Month' },
-  { id: 'last-30', label: 'Last 30 Days' },
-  { id: 'last-90', label: 'Last 90 Days' },
+  { id: 'last-month', label: 'Last Month' },
   { id: 'this-year', label: 'This Year' },
+  { id: 'last-year', label: 'Last Year' },
   { id: 'all-time', label: 'All Time' },
 ]
 

@@ -21,7 +21,6 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
   const [step, setStep] = useState<Step>('upload')
   const [preview, setPreview] = useState<UploadPreviewResponse | null>(null)
   const [autoCategorize, setAutoCategorize] = useState(true)
-  const [skipDupes, setSkipDupes] = useState(true)
   const [progress, setProgress] = useState(0)
   const [progressMsg, setProgressMsg] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -99,6 +98,7 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
         transactions: preview.transactions,
         source_file: fileName,
         account_id: selectedAccountId,
+        auto_categorize: autoCategorize,
       })
 
       if (autoCategorize && result.job_id) {
@@ -272,20 +272,18 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
 
             {/* Options */}
             <div className="space-y-2.5">
-              {[
-                { key: 'auto', label: 'Auto-categorize with AI (Ollama)', val: autoCategorize, set: setAutoCategorize },
-                { key: 'skip', label: 'Skip duplicate transactions', val: skipDupes, set: setSkipDupes },
-              ].map(opt => (
-                <label key={opt.key} className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={opt.val}
-                    onChange={e => opt.set(e.target.checked)}
-                    className="w-4 h-4 rounded text-primary-600 border-gray-300 dark:border-gray-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
-                </label>
-              ))}
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoCategorize}
+                  onChange={e => setAutoCategorize(e.target.checked)}
+                  className="w-4 h-4 rounded text-primary-600 border-gray-300 dark:border-gray-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Auto-categorize with AI (Ollama)</span>
+              </label>
+              <p className="text-xs text-gray-400 dark:text-gray-500 ml-6.5">
+                Duplicate transactions are always skipped automatically.
+              </p>
             </div>
 
             {/* Actions */}

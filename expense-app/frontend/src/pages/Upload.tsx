@@ -51,6 +51,7 @@ export function Upload() {
       const result = await api.importTransactions({
         transactions: preview.transactions,
         source_file: currentFile.name,
+        auto_categorize: true,
       })
       setImportResult(result)
 

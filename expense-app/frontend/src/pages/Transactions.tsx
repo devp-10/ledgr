@@ -81,7 +81,7 @@ export function Transactions() {
   }
 
   const handleCategoryChange = async (id: number, category: string) => {
-    await api.updateTransaction(id, category)
+    await api.updateTransaction(id, { category })
     setData(prev => prev ? {
       ...prev,
       items: prev.items.map(t => t.id === id ? { ...t, category } : t),

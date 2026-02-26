@@ -24,6 +24,7 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
   const [rules, setRules] = useState<BudgetRule[]>([])
   const [newRule, setNewRule] = useState({ match_type: 'contains' as BudgetRule['match_type'], pattern: '' })
   const [testInput, setTestInput] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (category) {
@@ -164,17 +165,27 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
 
         {/* Actions */}
         <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => { onDelete(category.id); onClose() }}
-          >
-            <Trash2 size={14} /> Delete
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" size="sm" onClick={handleSave}>Save Changes</Button>
-          </div>
+          {confirmDelete ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Delete this category?</span>
+              <Button variant="danger" size="sm" onClick={() => { onDelete(category.id); onClose() }}>
+                Confirm
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+              <Trash2 size={14} /> Delete
+            </Button>
+          )}
+          {!confirmDelete && (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+              <Button variant="primary" size="sm" onClick={handleSave}>Save Changes</Button>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

@@ -131,10 +131,7 @@ export function AccountsPopover() {
                       {account.transaction_count} txn{account.transaction_count !== 1 ? 's' : ''}
                     </span>
                     <button
-                      onClick={() => {
-                        if (account.transaction_count === 0) handleDelete(account.id)
-                        else setConfirmDeleteId(account.id)
-                      }}
+                      onClick={() => setConfirmDeleteId(account.id)}
                       className="absolute right-3 opacity-0 group-hover/acct:opacity-100 p-1 rounded text-gray-400 hover:text-status-negative transition-all"
                     >
                       <Trash2 size={13} />

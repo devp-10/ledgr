@@ -6,13 +6,20 @@ from models import ParsedTransaction
 from services.database import compute_hash
 
 COLUMN_ALIASES = {
-    "date": ["date", "transaction date", "trans date", "posting date", "value date", "trans. date"],
+    "date": ["date", "transaction date", "trans date", "posting date", "value date", "trans. date", "post date"],
     "description": ["description", "memo", "narration", "details", "payee", "merchant", "transaction", "particulars", "reference"],
     "amount": ["amount", "value", "net amount", "transaction amount",
                "amount (usd)", "amount (cad)", "amount (eur)", "amount (gbp)"],
     "debit": ["debit", "withdrawal", "debit amount", "dr", "withdrawals"],
     "credit": ["credit", "deposit", "credit amount", "cr", "deposits"],
+    "tx_type": ["type", "transaction type", "trans type"],
 }
+
+# Credit card CSVs use positive amounts for purchases (expenses) and
+# negative amounts for credits/payments. These sets let us correct the sign.
+_CC_EXPENSE_TYPES = {"sale", "purchase", "fee", "charge", "debit"}
+_CC_INCOME_TYPES  = {"payment", "credit", "return", "refund", "deposit",
+                     "rebate", "reversal", "adjustment"}
 
 
 def detect_columns(df: pd.DataFrame) -> dict:
@@ -75,6 +82,13 @@ def parse_file(content: bytes, filename: str) -> Tuple[List[ParsedTransaction], 
 
             if has_amount:
                 amount = _to_float(row[col_map["amount"]])
+                # Correct sign for credit card CSVs that export purchases as positive
+                if "tx_type" in col_map:
+                    type_val = str(row.get(col_map["tx_type"], "")).strip().lower()
+                    if type_val in _CC_EXPENSE_TYPES and amount > 0:
+                        amount = -amount   # Sale $50 → expense -$50
+                    elif type_val in _CC_INCOME_TYPES and amount < 0:
+                        amount = -amount   # Payment -$200 → credit +$200
             else:
                 debit = _to_float(row.get(col_map.get("debit", "__missing__"), 0))
                 credit = _to_float(row.get(col_map.get("credit", "__missing__"), 0))

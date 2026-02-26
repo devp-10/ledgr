@@ -41,16 +41,46 @@ export const api = {
     return request<PaginatedTransactions>(`/transactions?${qs}`)
   },
 
-  updateTransaction: (id: number, category: string) =>
+  createTransaction: (body: CreateTransactionRequest) =>
+    request<Transaction>('/transactions', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateTransaction: (id: number, update: Partial<TransactionUpdate>) =>
     request<Transaction>(`/transactions/${id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ category }),
+      body: JSON.stringify(update),
+    }),
+
+  deleteTransaction: (id: number) =>
+    request<{ deleted: number }>(`/transactions/${id}`, { method: 'DELETE' }),
+
+  duplicateTransaction: (id: number) =>
+    request<Transaction>(`/transactions/${id}/duplicate`, { method: 'POST' }),
+
+  splitTransaction: (id: number, splits: SplitItem[]) =>
+    request<{ splits: Transaction[] }>(`/transactions/${id}/split`, {
+      method: 'POST',
+      body: JSON.stringify({ splits }),
     }),
 
   bulkUpdateTransactions: (ids: number[], category: string) =>
     request<{ updated: number }>('/transactions/bulk', {
       method: 'PATCH',
       body: JSON.stringify({ ids, category }),
+    }),
+
+  bulkReviewTransactions: (ids: number[]) =>
+    request<{ reviewed: number }>('/transactions/bulk-review', {
+      method: 'PATCH',
+      body: JSON.stringify({ ids }),
+    }),
+
+  bulkDeleteTransactions: (ids: number[]) =>
+    request<{ deleted: number }>('/transactions/bulk', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids }),
     }),
 
   getCategories: () =>
@@ -70,6 +100,12 @@ export const api = {
 
   recategorize: () =>
     request<{ job_id: string | null; total: number }>('/transactions/recategorize', { method: 'POST' }),
+
+  bulkCategorizeAI: (ids: number[]) =>
+    request<{ job_id: string | null; total: number }>('/transactions/bulk-categorize', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }),
 
   exportCsv: () =>
     fetch(`${BASE}/export`, { method: 'POST' }),
@@ -126,6 +162,8 @@ export const api = {
 
 // ─── API Type Definitions ─────────────────────────────────────────────────────
 
+export type TransactionType = 'expense' | 'income' | 'transfer'
+
 export interface Account {
   id: number
   name: string
@@ -140,10 +178,41 @@ export interface Transaction {
   description: string
   amount: number
   category: string | null
+  transaction_type: TransactionType
+  notes: string
+  reviewed: boolean
+  linked_transaction_id: number | null
   source_file: string | null
   account_id: number | null
   imported_at: string
   updated_at: string
+}
+
+export interface TransactionUpdate {
+  category?: string | null
+  transaction_type?: TransactionType
+  description?: string
+  date?: string
+  amount?: number
+  notes?: string
+  reviewed?: boolean
+  account_id?: number | null
+}
+
+export interface CreateTransactionRequest {
+  date: string
+  description: string
+  amount: number
+  transaction_type: TransactionType
+  category?: string | null
+  account_id?: number | null
+  notes?: string
+}
+
+export interface SplitItem {
+  amount: number
+  category?: string
+  description: string
 }
 
 export interface ParsedTransaction {
@@ -165,6 +234,7 @@ export interface ImportRequest {
   transactions: ParsedTransaction[]
   source_file: string
   account_id?: number
+  auto_categorize: boolean
 }
 
 export interface ImportResponse {
@@ -193,6 +263,8 @@ export interface TransactionFilters {
   page_size?: number
   search?: string
   category?: string
+  transaction_type?: string
+  reviewed?: number
   date_from?: string
   date_to?: string
   amount_min?: number | string
