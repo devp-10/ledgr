@@ -4,6 +4,7 @@ import { getCategoryColor, getCategoryDotColor } from '../ui/Badge'
 import { clsx } from 'clsx'
 import { format, parseISO } from 'date-fns'
 import { Pencil, Trash2, TrendingUp, TrendingDown, ArrowRightLeft, Check, X } from 'lucide-react'
+import { CategoryDropdown } from './CategoryDropdown'
 
 interface TransactionRowProps {
   transaction: Transaction
@@ -148,14 +149,11 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
         {/* Category — expense only */}
         <div className="w-32 flex-shrink-0">
           {editType === 'expense' && (
-            <select
+            <CategoryDropdown
               value={editCat}
-              onChange={e => setEditCat(e.target.value)}
-              className={clsx(inputCls, 'text-xs')}
-            >
-              <option value="">Uncategorized</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+              categories={categories}
+              onChange={setEditCat}
+            />
           )}
         </div>
 

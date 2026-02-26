@@ -1,8 +1,8 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { Transaction, TransactionUpdate } from '../../types'
 import { TransactionRow } from './TransactionRow'
 import { EmptyState } from '../common/EmptyState'
-import { Receipt, ChevronDown } from 'lucide-react'
+import { Receipt, ChevronDown, Loader2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { clsx } from 'clsx'
 
@@ -20,6 +20,8 @@ interface TransactionListProps {
   sortBy: string
   sortDir: string
   onSort: (col: string) => void
+  hasMore?: boolean
+  onLoadMore?: () => void
 }
 
 function SkeletonRow() {
@@ -64,8 +66,21 @@ const COL = {
 
 export function TransactionList({
   transactions, categories, accounts, selectedIds, onSelectAll, onSelect, onPatch, onDelete,
-  loading, total, sortBy, sortDir, onSort
+  loading, total, sortBy, sortDir, onSort, hasMore, onLoadMore,
 }: TransactionListProps) {
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el || !onLoadMore || !hasMore) return
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) onLoadMore()
+    }, { rootMargin: '200px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [onLoadMore, hasMore])
+
   if (loading && !transactions.length) {
     return (
       <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
@@ -84,8 +99,8 @@ export function TransactionList({
     )
   }
 
-  const groups = groupByDate(transactions)
   const allSelected = transactions.length > 0 && transactions.every(t => selectedIds.has(t.id))
+  const groupedByDate = sortBy === 'date'
 
   const SortBtn = ({ col, children }: { col: string; children: ReactNode }) => (
     <button
@@ -108,10 +123,21 @@ export function TransactionList({
     </span>
   )
 
+  const rowProps = (t: Transaction) => ({
+    key: t.id,
+    transaction: t,
+    categories,
+    accounts,
+    selected: selectedIds.has(t.id),
+    onSelect,
+    onPatch,
+    onDelete,
+  })
+
   return (
     <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
 
-      {/* ── Column header ─────────────────────────────────────────────────── */}
+      {/* ── Column header ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
         <div className={COL.checkbox}>
           <input
@@ -130,7 +156,7 @@ export function TransactionList({
         <div className={COL.actions} />
       </div>
 
-      {/* ── Count bar ─────────────────────────────────────────────────────── */}
+      {/* ── Count bar ──────────────────────────────────────────────────── */}
       <div className="px-4 py-1 border-b border-border-light dark:border-border-dark bg-gray-50/50 dark:bg-gray-800/30">
         <span className="text-[10px] text-gray-400 dark:text-gray-500">
           {selectedIds.size > 0
@@ -139,31 +165,35 @@ export function TransactionList({
         </span>
       </div>
 
-      {/* ── Grouped rows (always by date) ─────────────────────────────────── */}
-      {groups.map(([key, txns]) => (
-        <div key={key}>
-          <div className="sticky top-14 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-border-light dark:border-border-dark flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
-              {dateGroupLabel(key)}
-            </span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500">
-              {txns.length} transaction{txns.length !== 1 ? 's' : ''}
-            </span>
+      {/* ── Rows ──────────────────────────────────────────────────────── */}
+      {groupedByDate ? (
+        // Date-sorted: show sticky date group headers
+        groupByDate(transactions).map(([key, txns]) => (
+          <div key={key}>
+            <div className="sticky top-14 z-10 bg-gray-100 dark:bg-gray-800 px-4 py-1.5 border-b border-border-light dark:border-border-dark flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                {dateGroupLabel(key)}
+              </span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                {txns.length} transaction{txns.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            {txns.map(t => <TransactionRow {...rowProps(t)} />)}
           </div>
-          {txns.map(t => (
-            <TransactionRow
-              key={t.id}
-              transaction={t}
-              categories={categories}
-              accounts={accounts}
-              selected={selectedIds.has(t.id)}
-              onSelect={onSelect}
-              onPatch={onPatch}
-              onDelete={onDelete}
-            />
-          ))}
+        ))
+      ) : (
+        // Other sort: flat list, no group headers
+        transactions.map(t => <TransactionRow {...rowProps(t)} />)
+      )}
+
+      {/* ── Infinite scroll sentinel ───────────────────────────────────── */}
+      <div ref={sentinelRef} />
+      {loading && transactions.length > 0 && (
+        <div className="flex items-center justify-center gap-2 py-4 text-xs text-gray-400 dark:text-gray-500">
+          <Loader2 size={14} className="animate-spin" />
+          Loading more…
         </div>
-      ))}
+      )}
     </div>
   )
 }

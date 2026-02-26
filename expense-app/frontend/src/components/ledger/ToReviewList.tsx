@@ -3,6 +3,7 @@ import { Transaction, TransactionType, TransactionUpdate } from '../../types'
 import { EmptyState } from '../common/EmptyState'
 import { CheckSquare, Check, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { CategoryDropdown } from './CategoryDropdown'
 
 interface ToReviewListProps {
   transactions: Transaction[]
@@ -108,14 +109,11 @@ function ReviewRow({
       {/* Category — expense only */}
       <div className={COL.category}>
         {type === 'expense' && (
-          <select
+          <CategoryDropdown
             value={category}
-            onChange={e => setCat(e.target.value)}
-            className={clsx(inputCls, 'text-xs')}
-          >
-            <option value="">Uncategorized</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+            categories={categories}
+            onChange={setCat}
+          />
         )}
       </div>
 

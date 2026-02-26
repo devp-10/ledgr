@@ -1,10 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Upload, Plus } from 'lucide-react'
-import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from 'date-fns'
 import { useTransactions } from '../hooks/useTransactions'
 import { useCategories } from '../hooks/useCategories'
 import { SearchBar } from '../components/ledger/SearchBar'
-import { QuickFilters } from '../components/ledger/QuickFilters'
 import { AdvancedFilters } from '../components/ledger/AdvancedFilters'
 import { TransactionList } from '../components/ledger/TransactionList'
 import { ToReviewList } from '../components/ledger/ToReviewList'
@@ -12,36 +10,14 @@ import { BulkActions } from '../components/ledger/BulkActions'
 import { ImportModal } from '../components/ledger/ImportModal'
 import { AddTransactionModal } from '../components/ledger/AddTransactionModal'
 import { Button } from '../components/ui/Button'
-import { QuickFilter, LedgerView, Account, TransactionUpdate } from '../types'
+import { LedgerView, Account, TransactionUpdate } from '../types'
 import { api } from '../lib/api'
 import { useToastContext } from '../App'
 import { clsx } from 'clsx'
 
-function getDateRange(filter: QuickFilter): { date_from?: string; date_to?: string } {
-  const today = new Date()
-  const fmt = (d: Date) => format(d, 'yyyy-MM-dd')
-  switch (filter) {
-    case 'this-month':
-      return { date_from: fmt(startOfMonth(today)), date_to: fmt(endOfMonth(today)) }
-    case 'last-month': {
-      const lm = subMonths(today, 1)
-      return { date_from: fmt(startOfMonth(lm)), date_to: fmt(endOfMonth(lm)) }
-    }
-    case 'this-year':
-      return { date_from: fmt(startOfYear(today)), date_to: fmt(endOfYear(today)) }
-    case 'last-year': {
-      const ly = subYears(today, 1)
-      return { date_from: fmt(startOfYear(ly)), date_to: fmt(endOfYear(ly)) }
-    }
-    case 'all-time':
-      return {}
-  }
-}
-
 export function Ledger() {
   const addToast = useToastContext()
   const [view, setView] = useState<LedgerView>('all')
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('this-month')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -52,13 +28,12 @@ export function Ledger() {
 
   const { categories } = useCategories()
 
-  // All Transactions hook
+  // All Transactions hook — no date restriction, paginated
   const allTx = useTransactions({
-    ...getDateRange('this-month'),
     reviewed: 1,
     sort_by: 'date',
     sort_dir: 'desc',
-    page_size: 200,
+    page_size: 50,
   })
 
   // To Review hook — always shows unreviewed, no date filter
@@ -79,11 +54,6 @@ export function Ledger() {
     const t = setTimeout(() => allTx.updateFilters({ search: search || undefined }), 300)
     return () => clearTimeout(t)
   }, [search]) // eslint-disable-line
-
-  const handleQuickFilter = (f: QuickFilter) => {
-    setQuickFilter(f)
-    allTx.updateFilters(getDateRange(f))
-  }
 
   const handleSort = (col: string) => {
     const newDir = sortBy === col && sortDir === 'desc' ? 'asc' : 'desc'
@@ -169,7 +139,6 @@ export function Ledger() {
     try {
       const result = await api.bulkCategorizeAI(ids)
       if (result.job_id) {
-        // Poll until categorization completes
         await new Promise<void>(resolve => {
           const poll = setInterval(async () => {
             try {
@@ -215,7 +184,6 @@ export function Ledger() {
     <div className="space-y-4 animate-fade-in">
       {/* Top bar: Tabs + actions */}
       <div className="flex items-center gap-3">
-        {/* View tabs */}
         <div className="flex rounded-lg border border-border-light dark:border-border-dark overflow-hidden flex-shrink-0">
           <button
             onClick={() => switchView('all')}
@@ -251,7 +219,6 @@ export function Ledger() {
 
         <div className="flex-1" />
 
-        {/* Add + Import */}
         <Button variant="ghost" size="md" onClick={() => setAddOpen(true)}>
           <Plus size={15} /> Add
         </Button>
@@ -268,7 +235,6 @@ export function Ledger() {
               <SearchBar value={search} onChange={setSearch} />
             </div>
           </div>
-          <QuickFilters active={quickFilter} onChange={handleQuickFilter} />
           <AdvancedFilters
             filters={allTx.filters}
             categories={categories}
@@ -308,6 +274,8 @@ export function Ledger() {
           sortBy={sortBy}
           sortDir={sortDir}
           onSort={handleSort}
+          hasMore={allTx.hasMore}
+          onLoadMore={allTx.loadMore}
         />
       )}
 
@@ -326,7 +294,6 @@ export function Ledger() {
         />
       )}
 
-      {/* Modals */}
       <ImportModal
         open={importOpen}
         onClose={() => setImportOpen(false)}
