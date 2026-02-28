@@ -494,8 +494,8 @@ def split_transaction(transaction_id: int, req: SplitRequest):
 @router.get("/categories")
 def list_categories():
     with get_connection() as conn:
-        names = [r["name"] for r in conn.execute("SELECT name FROM budget_categories ORDER BY name").fetchall()]
-    return {"categories": names}
+        rows = conn.execute("SELECT name, emoji FROM budget_categories ORDER BY name").fetchall()
+    return {"categories": [{"name": r["name"], "emoji": r["emoji"] or "📦"} for r in rows]}
 
 
 @router.post("/export")

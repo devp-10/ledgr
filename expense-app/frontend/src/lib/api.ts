@@ -84,7 +84,7 @@ export const api = {
     }),
 
   getCategories: () =>
-    request<{ categories: string[] }>('/categories'),
+    request<{ categories: { name: string; emoji: string }[] }>('/categories'),
 
   getDashboard: (month?: string) =>
     request<DashboardSummary>(`/dashboard${month ? `?month=${month}` : ''}`),

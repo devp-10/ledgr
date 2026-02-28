@@ -22,6 +22,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Uncategorized': 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
 }
 
+const _COLOR_PALETTE = Object.values(CATEGORY_COLORS)
+
+function _hashIndex(str: string, len: number): number {
+  let h = 0
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) & 0xffff
+  return h % len
+}
+
 interface Props {
   category: string | null
   className?: string
@@ -29,7 +37,7 @@ interface Props {
 
 export function CategoryBadge({ category, className }: Props) {
   const label = category || 'Uncategorized'
-  const colorClass = CATEGORY_COLORS[label] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+  const colorClass = CATEGORY_COLORS[label] ?? _COLOR_PALETTE[_hashIndex(label, _COLOR_PALETTE.length)]
   return (
     <span className={clsx(
       'inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap',

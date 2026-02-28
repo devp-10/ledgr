@@ -64,16 +64,32 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   'Other':                '📦',
 }
 
+// Dynamic emoji map populated at runtime from budget_categories via useCategories
+let _dynamicEmojiMap: Record<string, string> = {}
+export function setCategoryEmojiMap(map: Record<string, string>) {
+  _dynamicEmojiMap = map
+}
+
+// Palette arrays for hash-based fallback (Tailwind classes are all defined above — safe from purging)
+const _DOT_PALETTE = Object.values(CATEGORY_DOTS)
+const _COLOR_PALETTE = Object.values(CATEGORY_COLORS)
+
+function _hashIndex(str: string, len: number): number {
+  let h = 0
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) & 0xffff
+  return h % len
+}
+
 export function getCategoryColor(category: string): string {
-  return CATEGORY_COLORS[category] || CATEGORY_COLORS['Other']
+  return CATEGORY_COLORS[category] ?? _COLOR_PALETTE[_hashIndex(category, _COLOR_PALETTE.length)]
 }
 
 export function getCategoryDotColor(category: string): string {
-  return CATEGORY_DOTS[category] || CATEGORY_DOTS['Other']
+  return CATEGORY_DOTS[category] ?? _DOT_PALETTE[_hashIndex(category, _DOT_PALETTE.length)]
 }
 
 export function getCategoryEmoji(category: string): string {
-  return CATEGORY_EMOJIS[category] || '📦'
+  return _dynamicEmojiMap[category] ?? CATEGORY_EMOJIS[category] ?? '📦'
 }
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
