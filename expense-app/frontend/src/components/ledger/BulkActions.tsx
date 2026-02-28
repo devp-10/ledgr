@@ -11,10 +11,11 @@ interface BulkActionsProps {
   onDelete: () => Promise<void>
   onAICategorize?: () => Promise<void>
   onDeselect: () => void
+  aiProgress?: { completed: number; total: number }
 }
 
 export function BulkActions({
-  count, categories, showReview, onCategorize, onReview, onDelete, onAICategorize, onDeselect
+  count, categories, showReview, onCategorize, onReview, onDelete, onAICategorize, onDeselect, aiProgress
 }: BulkActionsProps) {
   const [selectedCat, setSelectedCat] = useState('')
   const [loadingCat, setLoadingCat] = useState(false)
@@ -77,7 +78,10 @@ export function BulkActions({
       {/* AI categorize */}
       {onAICategorize && (
         <Button variant="ghost" size="sm" loading={loadingAI} onClick={handleAICategorize}>
-          <Sparkles size={14} /> Categorize with AI
+          <Sparkles size={14} />
+          {loadingAI && aiProgress
+            ? `Categorizing ${aiProgress.completed} of ${aiProgress.total}…`
+            : 'Categorize with AI'}
         </Button>
       )}
 
