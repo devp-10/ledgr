@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts'
 import { useState } from 'react'
 import { SpendingCategory } from '../../types'
-import { getCategoryDotColor } from '../ui/Badge'
+import { getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 
 interface CategoryDonutProps {
   data: SpendingCategory[]
@@ -47,8 +47,9 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
   const sorted = [...data].sort((a, b) => b.amount - a.amount).slice(0, 8)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative h-52">
+    <div className="flex gap-5 items-center">
+      {/* Donut */}
+      <div className="relative flex-shrink-0" style={{ width: 190, height: 190 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -57,8 +58,8 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
               nameKey="category"
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={85}
+              innerRadius={66}
+              outerRadius={88}
               activeIndex={activeIdx ?? undefined}
               activeShape={renderActiveShape}
               onMouseEnter={(_, i) => setActiveIdx(i)}
@@ -74,28 +75,40 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-xs text-gray-400">Total</span>
-          <span className="text-lg font-bold font-money text-gray-900 dark:text-gray-100">{formatMoney(total)}</span>
+          <span className="text-[10px] text-gray-400 uppercase tracking-wide">Total</span>
+          <span className="text-base font-bold font-money text-gray-900 dark:text-gray-100 leading-tight">
+            {formatMoney(total)}
+          </span>
         </div>
       </div>
 
-      <div className="space-y-1.5">
+      {/* Legend */}
+      <div className="flex-1 min-w-0 space-y-1">
         {sorted.map((item, i) => (
           <div
             key={item.category}
-            className={`flex items-center justify-between text-sm transition-opacity ${activeIdx === null || activeIdx === i ? 'opacity-100' : 'opacity-40'}`}
+            className={`flex items-center justify-between gap-2 transition-opacity cursor-default ${
+              activeIdx === null || activeIdx === i ? 'opacity-100' : 'opacity-35'
+            }`}
             onMouseEnter={() => setActiveIdx(i)}
             onMouseLeave={() => setActiveIdx(null)}
           >
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryDotColor(item.category) }} />
-              <span className="text-gray-700 dark:text-gray-300 truncate max-w-[120px] text-xs">{item.category}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: getCategoryDotColor(item.category) }}
+              />
+              <span className="text-gray-700 dark:text-gray-300 truncate text-xs">
+                {getCategoryEmoji(item.category)} {item.category}
+              </span>
             </div>
-            <div className="flex items-center gap-3 ml-2 flex-shrink-0">
-              <span className="text-gray-400 dark:text-gray-500 text-xs">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-gray-400 dark:text-gray-500 text-xs w-7 text-right">
                 {total > 0 ? Math.round((item.amount / total) * 100) : 0}%
               </span>
-              <span className="font-money text-gray-900 dark:text-gray-100 text-xs">{formatMoney(item.amount)}</span>
+              <span className="font-money text-gray-800 dark:text-gray-200 text-xs w-16 text-right">
+                {formatMoney(item.amount)}
+              </span>
             </div>
           </div>
         ))}

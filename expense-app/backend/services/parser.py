@@ -1,6 +1,6 @@
 import pandas as pd
 from io import BytesIO
-from typing import Tuple, List
+from typing import Optional, Tuple, List
 
 from models import ParsedTransaction
 from services.database import compute_hash
@@ -15,11 +15,38 @@ COLUMN_ALIASES = {
     "tx_type": ["type", "transaction type", "trans type"],
 }
 
-# Credit card CSVs use positive amounts for purchases (expenses) and
-# negative amounts for credits/payments. These sets let us correct the sign.
-_CC_EXPENSE_TYPES = {"sale", "purchase", "fee", "charge", "debit"}
-_CC_INCOME_TYPES  = {"payment", "credit", "return", "refund", "deposit",
-                     "rebate", "reversal", "adjustment"}
+# Keywords indicating money going OUT (expenses/debits)
+_EXPENSE_TYPE_KEYWORDS = {
+    "sale", "purchase", "fee", "charge", "debit", "dr",
+    "withdrawal", "withdraw", "atm", "pos", "check",
+    "wire out", "ach debit", "bill payment", "payment out",
+    "direct debit", "debit purchase", "debit card", "pos debit",
+    "transfer out", "outgoing transfer",
+}
+
+# Keywords indicating money coming IN (income/credits)
+_INCOME_TYPE_KEYWORDS = {
+    "payment", "credit", "cr", "return", "refund", "deposit",
+    "rebate", "reversal", "adjustment", "direct deposit",
+    "ach credit", "wire in", "interest", "dividend",
+    "payment in", "payroll", "salary",
+    "transfer in", "incoming transfer",
+}
+
+# Keywords indicating account-to-account transfer
+_TRANSFER_TYPE_KEYWORDS = {"transfer", "xfer", "internal transfer"}
+
+
+def _classify_type(type_val: str) -> Optional[str]:
+    """Classify a CSV type column value into 'expense', 'income', or 'transfer'."""
+    # Expense and income directional keywords take priority over generic "transfer"
+    if any(kw in type_val for kw in _EXPENSE_TYPE_KEYWORDS):
+        return "expense"
+    if any(kw in type_val for kw in _INCOME_TYPE_KEYWORDS):
+        return "income"
+    if any(kw in type_val for kw in _TRANSFER_TYPE_KEYWORDS):
+        return "transfer"
+    return None
 
 
 def detect_columns(df: pd.DataFrame) -> dict:
@@ -80,20 +107,25 @@ def parse_file(content: bytes, filename: str) -> Tuple[List[ParsedTransaction], 
             if not description or description.lower() in ("nan", "none", ""):
                 continue
 
+            transaction_type: Optional[str] = None
+
             if has_amount:
                 amount = _to_float(row[col_map["amount"]])
-                # Correct sign for credit card CSVs that export purchases as positive
+                # Classify type from type column keyword (no sign correction here —
+                # sign correction happens at import time based on account type)
                 if "tx_type" in col_map:
                     type_val = str(row.get(col_map["tx_type"], "")).strip().lower()
-                    if type_val in _CC_EXPENSE_TYPES and amount > 0:
-                        amount = -amount   # Sale $50 → expense -$50
-                    elif type_val in _CC_INCOME_TYPES and amount < 0:
-                        amount = -amount   # Payment -$200 → credit +$200
+                    transaction_type = _classify_type(type_val)
             else:
                 debit = _to_float(row.get(col_map.get("debit", "__missing__"), 0))
                 credit = _to_float(row.get(col_map.get("credit", "__missing__"), 0))
                 # credit = money in (positive), debit = money out (negative)
                 amount = credit - debit
+                # Debit/credit column format implies type directly
+                if debit > 0 and credit == 0:
+                    transaction_type = "expense"
+                elif credit > 0 and debit == 0:
+                    transaction_type = "income"
 
             h = compute_hash(date_str, description, amount)
             transactions.append(ParsedTransaction(
@@ -101,6 +133,7 @@ def parse_file(content: bytes, filename: str) -> Tuple[List[ParsedTransaction], 
                 description=description,
                 amount=amount,
                 hash=h,
+                transaction_type=transaction_type,
             ))
         except Exception:
             continue  # skip malformed rows

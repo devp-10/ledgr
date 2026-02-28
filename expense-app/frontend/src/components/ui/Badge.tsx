@@ -23,24 +23,45 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const CATEGORY_DOTS: Record<string, string> = {
-  'Groceries': '#10B981',
-  'Dining & Restaurants': '#F97316',
-  'Transportation': '#3B82F6',
-  'Utilities': '#EAB308',
-  'Entertainment': '#8B5CF6',
-  'Shopping': '#EC4899',
-  'Healthcare': '#EF4444',
-  'Subscriptions': '#6366F1',
-  'Travel': '#0EA5E9',
-  'Housing': '#F59E0B',
-  'Insurance': '#64748B',
-  'Personal Care': '#F43F5E',
-  'Education': '#06B6D4',
-  'Gifts & Donations': '#D946EF',
-  'Income': '#10B981',
-  'Transfer': '#14B8A6',
-  'Fees & Charges': '#71717A',
-  'Other': '#9CA3AF',
+  'Groceries':            '#16A34A', // vivid green
+  'Dining & Restaurants': '#EA580C', // vivid orange
+  'Transportation':       '#2563EB', // vivid blue
+  'Utilities':            '#CA8A04', // vivid yellow-gold
+  'Entertainment':        '#7C3AED', // vivid violet
+  'Shopping':             '#DB2777', // vivid pink
+  'Healthcare':           '#DC2626', // vivid red
+  'Subscriptions':        '#0891B2', // vivid cyan (distinct from violet)
+  'Travel':               '#65A30D', // vivid lime (distinct from blue)
+  'Housing':              '#92400E', // warm brown (distinct from yellow)
+  'Insurance':            '#475569', // slate
+  'Personal Care':        '#BE185D', // deep rose
+  'Education':            '#0E7490', // teal (distinct from cyan)
+  'Gifts & Donations':    '#C026D3', // vivid fuchsia
+  'Income':               '#15803D', // dark green
+  'Transfer':             '#0D9488', // teal-green
+  'Fees & Charges':       '#52525B', // zinc
+  'Other':                '#6B7280', // gray
+}
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  'Groceries':            '🛒',
+  'Dining & Restaurants': '🍽️',
+  'Transportation':       '🚗',
+  'Utilities':            '⚡',
+  'Entertainment':        '🎬',
+  'Shopping':             '🛍️',
+  'Healthcare':           '🏥',
+  'Subscriptions':        '📱',
+  'Travel':               '✈️',
+  'Housing':              '🏠',
+  'Insurance':            '🛡️',
+  'Personal Care':        '💆',
+  'Education':            '📚',
+  'Gifts & Donations':    '🎁',
+  'Income':               '💰',
+  'Transfer':             '🔄',
+  'Fees & Charges':       '💸',
+  'Other':                '📦',
 }
 
 export function getCategoryColor(category: string): string {
@@ -49,6 +70,10 @@ export function getCategoryColor(category: string): string {
 
 export function getCategoryDotColor(category: string): string {
   return CATEGORY_DOTS[category] || CATEGORY_DOTS['Other']
+}
+
+export function getCategoryEmoji(category: string): string {
+  return CATEGORY_EMOJIS[category] || '📦'
 }
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

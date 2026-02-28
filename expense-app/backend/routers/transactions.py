@@ -34,6 +34,34 @@ def _infer_type(amount: float) -> str:
     return "income" if amount > 0 else "expense"
 
 
+def _apply_sign_and_type(
+    amount: float, kw_type: str | None, account_type: str
+) -> tuple[float, str]:
+    """Apply sign correction and determine final transaction type based on account type."""
+    if account_type == "credit_card":
+        # CC: positive amounts are expenses (purchases), negative are income (payments/refunds)
+        if kw_type == "expense" or (kw_type is None and amount > 0):
+            return -abs(amount), "expense"
+        elif kw_type == "income" or (kw_type is None and amount < 0):
+            return abs(amount), "income"
+        elif kw_type == "transfer":
+            return amount, "transfer"
+        else:
+            return amount, _infer_type(amount)
+    else:  # bank_account
+        # Bank: trust the sign; keyword guides type but sign wins on conflict
+        if kw_type == "expense":
+            return -abs(amount), "expense"   # ensure negative (handles abs-value CSVs)
+        elif kw_type == "income" and amount >= 0:
+            return amount, "income"           # sign agrees
+        elif kw_type == "income" and amount < 0:
+            return amount, "expense"          # conflict: trust sign (e.g. "payment" = bill pay)
+        elif kw_type == "transfer":
+            return amount, "transfer"
+        else:
+            return amount, _infer_type(amount)  # no type col: sign-based
+
+
 def _make_hash(date: str, description: str, amount: float) -> str:
     raw = f"{date}|{description.strip().lower()}|{amount:.2f}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
@@ -71,15 +99,25 @@ async def import_transactions(request: ImportRequest, background_tasks: Backgrou
     to_insert = [t for t in request.transactions if t.hash not in existing]
     skipped = len(request.transactions) - len(to_insert)
 
+    # Fetch account type once for sign correction logic
+    account_type = "bank_account"
+    if request.account_id:
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT account_type FROM accounts WHERE id = ?", (request.account_id,)
+            ).fetchone()
+            if row:
+                account_type = row["account_type"]
+
     inserted_pairs: list = []
     with get_connection() as conn:
         for t in to_insert:
-            tx_type = _infer_type(t.amount)
+            amount, tx_type = _apply_sign_and_type(t.amount, t.transaction_type, account_type)
             cursor = conn.execute(
                 """INSERT OR IGNORE INTO transactions
                    (hash, date, description, amount, transaction_type, notes, reviewed, source_file, account_id)
                    VALUES (?, ?, ?, ?, ?, '', 0, ?, ?)""",
-                (t.hash, t.date, t.description, t.amount, tx_type, request.source_file, request.account_id),
+                (t.hash, t.date, t.description, amount, tx_type, request.source_file, request.account_id),
             )
             if cursor.lastrowid:
                 inserted_pairs.append((cursor.lastrowid, t.description))

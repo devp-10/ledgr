@@ -5,11 +5,20 @@ import { api } from '../../lib/api'
 import { Account } from '../../types'
 import { Button } from '../ui/Button'
 
+function AccountTypeBadge({ type }: { type: string }) {
+  return type === 'credit_card' ? (
+    <span className="text-xs text-violet-500 dark:text-violet-400" title="Credit Card">💳</span>
+  ) : (
+    <span className="text-xs text-blue-500 dark:text-blue-400" title="Bank Account">🏦</span>
+  )
+}
+
 export function AccountsPopover() {
   const [open, setOpen] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showAdd, setShowAdd] = useState(false)
   const [addName, setAddName] = useState('')
+  const [addType, setAddType] = useState<'bank_account' | 'credit_card'>('bank_account')
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -20,6 +29,7 @@ export function AccountsPopover() {
     } else {
       setShowAdd(false)
       setAddName('')
+      setAddType('bank_account')
       setConfirmDeleteId(null)
     }
   }, [open])
@@ -37,9 +47,10 @@ export function AccountsPopover() {
   const handleAdd = async () => {
     if (!addName.trim()) return
     try {
-      const account = await api.addAccount(addName.trim())
+      const account = await api.addAccount(addName.trim(), addType)
       setAccounts(prev => [...prev, account].sort((a, b) => a.name.localeCompare(b.name)))
       setAddName('')
+      setAddType('bank_account')
       setShowAdd(false)
     } catch {}
   }
@@ -102,8 +113,9 @@ export function AccountsPopover() {
             {accounts.map(account => (
               <div
                 key={account.id}
-                className="relative group/acct flex items-center gap-3 py-2.5 px-4 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors border-b border-border-light dark:border-border-dark last:border-0"
+                className="relative group/acct flex items-center gap-2 py-2.5 px-4 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors border-b border-border-light dark:border-border-dark last:border-0"
               >
+                <AccountTypeBadge type={account.account_type} />
                 <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{account.name}</span>
                 {confirmDeleteId === account.id ? (
                   <div className="flex items-center gap-2 text-xs">
@@ -144,7 +156,7 @@ export function AccountsPopover() {
 
           {/* Add form */}
           {showAdd && (
-            <div className="px-4 py-3 border-t border-border-light dark:border-border-dark">
+            <div className="px-4 py-3 border-t border-border-light dark:border-border-dark space-y-2.5">
               <input
                 autoFocus
                 value={addName}
@@ -154,10 +166,35 @@ export function AccountsPopover() {
                   if (e.key === 'Escape') { setShowAdd(false); setAddName('') }
                 }}
                 placeholder="e.g. Chase Sapphire, BofA Checking..."
-                className="w-full rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 mb-2.5 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
+                className="w-full rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
               />
+              {/* Account type toggle */}
+              <div className="flex rounded-md border border-border-light dark:border-border-dark overflow-hidden text-xs font-medium">
+                <button
+                  onClick={() => setAddType('bank_account')}
+                  className={clsx(
+                    'flex-1 py-1.5 transition-colors',
+                    addType === 'bank_account'
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                  )}
+                >
+                  🏦 Bank
+                </button>
+                <button
+                  onClick={() => setAddType('credit_card')}
+                  className={clsx(
+                    'flex-1 py-1.5 border-l border-border-light dark:border-border-dark transition-colors',
+                    addType === 'credit_card'
+                      ? 'bg-violet-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                  )}
+                >
+                  💳 Credit Card
+                </button>
+              </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="ghost" size="sm" onClick={() => { setShowAdd(false); setAddName('') }}>
+                <Button variant="ghost" size="sm" onClick={() => { setShowAdd(false); setAddName(''); setAddType('bank_account') }}>
                   Cancel
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleAdd}>

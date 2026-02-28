@@ -86,12 +86,14 @@ TRANSACTION_TYPES = ["expense", "income", "transfer"]
 class Account(BaseModel):
     id: int
     name: str
+    account_type: str = 'bank_account'
     created_at: str
     transaction_count: int = 0
 
 
 class CreateAccountRequest(BaseModel):
     name: str
+    account_type: str = 'bank_account'
 
 
 class Transaction(BaseModel):
@@ -158,6 +160,7 @@ class ParsedTransaction(BaseModel):
     description: str
     amount: float
     hash: str
+    transaction_type: Optional[str] = None
 
 
 class UploadPreviewResponse(BaseModel):

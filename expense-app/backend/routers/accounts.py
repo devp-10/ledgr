@@ -11,7 +11,7 @@ def list_accounts():
     with get_connection() as conn:
         rows = conn.execute(
             """
-            SELECT a.id, a.name, a.created_at, COUNT(t.id) as transaction_count
+            SELECT a.id, a.name, a.account_type, a.created_at, COUNT(t.id) as transaction_count
             FROM accounts a
             LEFT JOIN transactions t ON t.account_id = a.id
             GROUP BY a.id
@@ -26,14 +26,18 @@ def create_account(data: CreateAccountRequest):
     name = data.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="Account name required")
+    account_type = data.account_type if data.account_type in ('credit_card', 'bank_account') else 'bank_account'
     with get_connection() as conn:
         try:
-            cursor = conn.execute("INSERT INTO accounts (name) VALUES (?)", (name,))
+            cursor = conn.execute(
+                "INSERT INTO accounts (name, account_type) VALUES (?, ?)",
+                (name, account_type),
+            )
             new_id = cursor.lastrowid
         except Exception:
             raise HTTPException(status_code=409, detail="Account already exists")
         row = conn.execute(
-            "SELECT id, name, created_at, 0 as transaction_count FROM accounts WHERE id = ?",
+            "SELECT id, name, account_type, created_at, 0 as transaction_count FROM accounts WHERE id = ?",
             (new_id,),
         ).fetchone()
     return Account(**dict(row))

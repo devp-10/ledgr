@@ -226,10 +226,18 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
               )}
             </div>
 
-            {/* Account selector */}
+            {/* Account selector (required) */}
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                Account <span className="font-normal text-gray-400">(optional)</span>
+                Account <span className="text-red-400">*</span>
+                {selectedAccountId && (() => {
+                  const acct = accounts.find(a => a.id === selectedAccountId)
+                  return acct ? (
+                    <span className="ml-2 font-normal">
+                      {acct.account_type === 'credit_card' ? '💳 Credit Card' : '🏦 Bank Account'}
+                    </span>
+                  ) : null
+                })()}
               </label>
               {showNewAccount ? (
                 <div className="flex gap-2">
@@ -254,9 +262,11 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
                     onChange={e => setSelectedAccountId(e.target.value ? Number(e.target.value) : undefined)}
                     className="flex-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                   >
-                    <option value="">No account</option>
+                    <option value="" disabled>Select account...</option>
                     {accounts.map(a => (
-                      <option key={a.id} value={a.id}>{a.name}</option>
+                      <option key={a.id} value={a.id}>
+                        {a.account_type === 'credit_card' ? '💳' : '🏦'} {a.name}
+                      </option>
                     ))}
                   </select>
                   <button
@@ -289,7 +299,12 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
             {/* Actions */}
             <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
               <Button variant="ghost" size="sm" onClick={() => setStep('upload')}>← Back</Button>
-              <Button variant="primary" onClick={handleImport}>
+              <Button
+                variant="primary"
+                onClick={handleImport}
+                disabled={!selectedAccountId}
+                title={!selectedAccountId ? 'Select an account to import' : undefined}
+              >
                 Import {preview.total_rows} Records
               </Button>
             </div>
