@@ -66,25 +66,36 @@ CREATE INDEX IF NOT EXISTS idx_transactions_hash ON transactions(hash);
 """
 
 DEFAULT_BUDGET_GROUPS = [
-    ("bills",         "Bills & Utilities",  0, 0),
-    ("lifestyle",     "Lifestyle",          0, 1),
-    ("transport",     "Transportation",     0, 2),
-    ("health",        "Health & Wellness",  1, 3),
-    ("subscriptions", "Subscriptions",      1, 4),
-    ("shopping",      "Shopping",           1, 5),
-    ("savings",       "Savings & Goals",    1, 6),
+    ("bills",     "Housing & Bills",  0, 0),
+    ("lifestyle", "Lifestyle",        0, 1),
+    ("transport", "Travel & commute", 0, 2),
+    ("shopping",  "Shopping",         0, 3),
+    ("personal",  "Personal",         0, 4),
 ]
 
 DEFAULT_BUDGET_CATEGORIES = [
-    ("rent",          "Housing",              "bills",         1500, "🏠", 0),
-    ("utilities",     "Utilities",            "bills",          150, "⚡", 1),
-    ("internet",      "Subscriptions",        "bills",          100, "📡", 2),
-    ("groceries",     "Groceries",            "lifestyle",      500, "🛒", 0),
-    ("dining",        "Dining & Restaurants", "lifestyle",      200, "🍽️", 1),
-    ("entertainment", "Entertainment",        "lifestyle",      100, "🎬", 2),
-    ("transport_cat", "Transportation",       "transport",      200, "🚗", 0),
-    ("healthcare",    "Healthcare",           "health",         150, "❤️", 0),
-    ("shopping_cat",  "Shopping",             "shopping",       300, "🛍️", 0),
+    # bills
+    ("rent",          "Rent",              "bills",      1500, "🏠", 0),
+    ("utilities",     "Utilities",         "bills",       150, "⚡", 1),
+    ("internet",      "Subscriptions",     "bills",       100, "📡", 2),
+    # lifestyle
+    ("groceries",     "Groceries",         "lifestyle",   500, "🍓", 0),
+    ("dining",        "Eating Out",        "lifestyle",   100, "🍕", 1),
+    ("entertainment", "Entertainment",     "lifestyle",   100, "⛷️", 2),
+    ("household",     "General Household", "lifestyle",     0, "🛒", 3),
+    ("alcohol",       "Alcohol & Bars",    "lifestyle",     0, "🍺", 4),
+    # transport
+    ("transport_cat", "Car Rental",        "transport",   200, "🚘", 0),
+    ("flights",       "Flights",           "transport",     0, "✈️", 1),
+    ("bus_trains",    "Bus/Trains",        "transport",     0, "🚆", 2),
+    ("hotels",        "Hotels",            "transport",     0, "🏨", 3),
+    ("uber_cabs",     "Uber/Cabs",         "transport",     0, "🚕", 4),
+    # shopping
+    ("shopping_cat",  "Shopping",          "shopping",    300, "🛍️", 0),
+    ("clothing",      "Clothing",          "shopping",      0, "👕", 1),
+    # personal
+    ("education",     "Education",         "personal",      0, "📚", 0),
+    ("personal_cat",  "Personal",          "personal",      0, "🫵", 1),
 ]
 
 
