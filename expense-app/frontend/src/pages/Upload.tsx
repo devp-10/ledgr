@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, Account, ParsedTransaction, UploadPreviewResponse, ImportResponse } from '../lib/api'
 import { FileUpload } from '../components/FileUpload'
+import { Select } from '../components/ui/Select'
 import { useToastContext } from '../App'
 import { POLL_INTERVAL_MS } from '../constants'
 
@@ -200,18 +201,16 @@ export function Upload() {
                 </span>
               )}
             </label>
-            <select
-              value={selectedAccountId ?? ''}
-              onChange={e => setSelectedAccountId(e.target.value ? Number(e.target.value) : undefined)}
-              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="" disabled>Select account...</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.id}>
-                  {a.account_type === 'credit_card' ? '💳' : '🏦'} {a.name}
-                </option>
-              ))}
-            </select>
+            <Select
+              value={String(selectedAccountId ?? '')}
+              onChange={v => setSelectedAccountId(v ? Number(v) : undefined)}
+              placeholder="Select account…"
+              options={accounts.map(a => ({
+                value: String(a.id),
+                label: a.name,
+                prefix: a.account_type === 'credit_card' ? '💳' : '🏦',
+              }))}
+            />
             {accounts.length === 0 && (
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
                 No accounts yet — create one in the Accounts menu in the top bar.

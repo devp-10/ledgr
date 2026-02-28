@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react'
 import { TransactionType, CreateTransactionRequest } from '../../types'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
+import { Select } from '../ui/Select'
 import { clsx } from 'clsx'
 import { format } from 'date-fns'
 
@@ -83,6 +84,13 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
   const inputCls = 'w-full rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500'
   const labelCls = 'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'
 
+  const accountOptions = accounts.map(a => ({ value: String(a.id), label: a.name }))
+
+  const categoryOptions = [
+    { value: '', label: 'Uncategorized' },
+    ...categories.map(c => ({ value: c, label: c })),
+  ]
+
   return (
     <Modal open={open} onClose={handleClose} title="Add Transaction" size="md">
       <form onSubmit={handleSave} className="p-5 space-y-4">
@@ -114,7 +122,7 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
           <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} required />
         </div>
 
-        {/* Description (not for transfer) or Transfer description */}
+        {/* Description */}
         {type !== 'transfer' ? (
           <div>
             <label className={labelCls}>Description</label>
@@ -162,27 +170,35 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>From Account</label>
-              <select value={fromAccount} onChange={e => setFromAccount(e.target.value ? Number(e.target.value) : '')} className={inputCls}>
-                <option value="">Select...</option>
-                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
+              <Select
+                value={String(fromAccount)}
+                onChange={v => setFromAccount(v ? Number(v) : '')}
+                placeholder="Select…"
+                options={[{ value: '', label: 'Select…' }, ...accountOptions]}
+              />
             </div>
             <div>
               <label className={labelCls}>To Account</label>
-              <select value={toAccount} onChange={e => setToAccount(e.target.value ? Number(e.target.value) : '')} className={inputCls}>
-                <option value="">Select...</option>
-                {accounts.filter(a => a.id !== fromAccount).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
+              <Select
+                value={String(toAccount)}
+                onChange={v => setToAccount(v ? Number(v) : '')}
+                placeholder="Select…"
+                options={[
+                  { value: '', label: 'Select…' },
+                  ...accounts.filter(a => a.id !== fromAccount).map(a => ({ value: String(a.id), label: a.name })),
+                ]}
+              />
             </div>
           </div>
         ) : (
           accounts.length > 0 && (
             <div>
               <label className={labelCls}>Account <span className="font-normal text-gray-400">(optional)</span></label>
-              <select value={account} onChange={e => setAccount(e.target.value ? Number(e.target.value) : '')} className={inputCls}>
-                <option value="">No account</option>
-                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
+              <Select
+                value={String(account)}
+                onChange={v => setAccount(v ? Number(v) : '')}
+                options={[{ value: '', label: 'No account' }, ...accountOptions]}
+              />
             </div>
           )
         )}
@@ -191,10 +207,12 @@ export function AddTransactionModal({ open, onClose, categories, accounts, onAdd
         {type === 'expense' && (
           <div>
             <label className={labelCls}>Category</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} className={inputCls}>
-              <option value="">Uncategorized</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <Select
+              value={category}
+              onChange={setCategory}
+              options={categoryOptions}
+              searchable
+            />
           </div>
         )}
 

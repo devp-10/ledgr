@@ -4,6 +4,7 @@ import { Upload, FileText, CheckSquare, Plus } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Progress } from '../ui/Progress'
+import { Select } from '../ui/Select'
 import { api, UploadPreviewResponse, Account } from '../../lib/api'
 import { POLL_INTERVAL_MS } from '../../constants'
 import { useToastContext } from '../../App'
@@ -257,18 +258,19 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
                 </div>
               ) : (
                 <div className="flex gap-2 items-center">
-                  <select
-                    value={selectedAccountId ?? ''}
-                    onChange={e => setSelectedAccountId(e.target.value ? Number(e.target.value) : undefined)}
-                    className="flex-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                  >
-                    <option value="" disabled>Select account...</option>
-                    {accounts.map(a => (
-                      <option key={a.id} value={a.id}>
-                        {a.account_type === 'credit_card' ? '💳' : '🏦'} {a.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex-1">
+                    <Select
+                      value={String(selectedAccountId ?? '')}
+                      onChange={v => setSelectedAccountId(v ? Number(v) : undefined)}
+                      placeholder="Select account…"
+                      options={accounts.map(a => ({
+                        value: String(a.id),
+                        label: a.name,
+                        prefix: a.account_type === 'credit_card' ? '💳' : '🏦',
+                      }))}
+                      className="py-1.5"
+                    />
+                  </div>
                   <button
                     onClick={() => setShowNewAccount(true)}
                     title="Add new account"

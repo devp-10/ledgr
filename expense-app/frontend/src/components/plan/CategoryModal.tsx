@@ -3,6 +3,7 @@ import { Trash2, Plus, X } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
+import { Select } from '../ui/Select'
 import { BudgetCategory, BudgetGroup, BudgetRule } from '../../types'
 
 interface CategoryModalProps {
@@ -118,13 +119,11 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
 
         <div>
           <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Group</label>
-          <select
+          <Select
             value={group}
-            onChange={e => setGroup(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-          >
-            {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
+            onChange={setGroup}
+            options={groups.map(g => ({ value: g.id, label: g.name }))}
+          />
         </div>
 
         {/* Auto-categorization rules */}
@@ -155,13 +154,14 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
           {/* New rule editor */}
           <div className="space-y-2.5">
             <div className="flex gap-2">
-              <select
-                value={newRule.match_type}
-                onChange={e => handleMatchTypeChange(e.target.value as BudgetRule['match_type'])}
-                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-              >
-                {MATCH_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
-              </select>
+              <div className="w-36 flex-shrink-0">
+                <Select
+                  value={newRule.match_type}
+                  onChange={v => handleMatchTypeChange(v as BudgetRule['match_type'])}
+                  options={MATCH_TYPES.map(t => ({ value: t, label: t.replace('_', ' ') }))}
+                  className="py-2 text-xs"
+                />
+              </div>
               <input
                 value={newRule.pattern}
                 onChange={e => handlePatternChange(e.target.value)}

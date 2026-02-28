@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Tag, Trash2, CheckCheck, Sparkles } from 'lucide-react'
 import { Button } from '../ui/Button'
+import { Select } from '../ui/Select'
 
 interface BulkActionsProps {
   count: number
@@ -53,6 +54,11 @@ export function BulkActions({
 
   if (!count) return null
 
+  const categoryOptions = [
+    { value: '', label: 'Set category…' },
+    ...categories.map(c => ({ value: c, label: c })),
+  ]
+
   return (
     <div className="flex items-center gap-3 flex-wrap bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800/50 rounded-lg px-4 py-2.5 animate-fade-in">
       <span className="text-sm font-medium text-accent-700 dark:text-accent-300">
@@ -62,14 +68,15 @@ export function BulkActions({
       {/* Manual categorize */}
       <div className="flex items-center gap-2 flex-1">
         <Tag size={14} className="text-accent-500 flex-shrink-0" />
-        <select
-          value={selectedCat}
-          onChange={e => setSelectedCat(e.target.value)}
-          className="flex-1 max-w-[180px] rounded-md border border-accent-200 dark:border-accent-800 bg-surface dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
-        >
-          <option value="">Set category...</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <div className="flex-1 max-w-[200px]">
+          <Select
+            value={selectedCat}
+            onChange={setSelectedCat}
+            options={categoryOptions}
+            searchable
+            className="py-1.5 border-accent-200 dark:border-accent-800"
+          />
+        </div>
         <Button variant="primary" size="sm" loading={loadingCat} disabled={!selectedCat} onClick={handleCategorize}>
           Apply
         </Button>
@@ -96,17 +103,8 @@ export function BulkActions({
       {confirmDelete ? (
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400">Delete {count} transaction{count !== 1 ? 's' : ''}?</span>
-          <Button
-            variant="danger"
-            size="sm"
-            loading={loadingDelete}
-            onClick={handleDelete}
-          >
-            Confirm
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
-            Cancel
-          </Button>
+          <Button variant="danger" size="sm" loading={loadingDelete} onClick={handleDelete}>Confirm</Button>
+          <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Cancel</Button>
         </div>
       ) : (
         <Button
