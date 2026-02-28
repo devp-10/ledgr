@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Transaction, TransactionType, TransactionUpdate } from '../../types'
 import { EmptyState } from '../common/EmptyState'
 import { CheckSquare, Check, Trash2, Pencil, X, TrendingUp, TrendingDown, ArrowRightLeft } from 'lucide-react'
@@ -6,7 +6,7 @@ import { clsx } from 'clsx'
 import { format, parseISO } from 'date-fns'
 import { CategoryDropdown } from './CategoryDropdown'
 import { TypeDropdown } from './TypeDropdown'
-import { getCategoryColor } from '../ui/Badge'
+import { getCategoryColor, getCategoryDotColor } from '../ui/Badge'
 
 interface ToReviewListProps {
   transactions: Transaction[]
@@ -81,6 +81,21 @@ function ReviewRow({
   const [saving, setSaving]         = useState(false)
   const [confirmDel, setConfirmDel] = useState(false)
   const [deleting, setDeleting]     = useState(false)
+  const [editingCat, setEditingCat] = useState(false)
+  const [catSearch, setCatSearch]   = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const filteredCats = catSearch
+    ? categories.filter(c => c.toLowerCase().includes(catSearch.toLowerCase()))
+    : categories
+
+  const handleCatSelect = async (cat: string) => {
+    setSaving(true)
+    setEditingCat(false)
+    setCatSearch('')
+    try { await onReview(t.id, { category: cat }) }
+    finally { setSaving(false) }
+  }
 
   const dateLabel = (() => { try { return format(parseISO(t.date), 'MMM d') } catch { return t.date } })()
   const amt = formatAmount(t.amount)
@@ -253,16 +268,52 @@ function ReviewRow({
         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{t.description}</p>
       </div>
 
-      <div className={COL.category}>
+      <div className={clsx('relative', COL.category)}>
         {t.transaction_type === 'expense' && (
-          <span className={clsx(
-            'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium',
-            t.category
-              ? getCategoryColor(t.category)
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
-          )}>
-            {t.category ?? 'Uncategorized'}
-          </span>
+          <>
+            <button
+              onClick={() => setEditingCat(e => !e)}
+              disabled={saving}
+              className={clsx(
+                'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium transition-all max-w-full truncate',
+                t.category ? getCategoryColor(t.category) : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+                'hover:opacity-90 cursor-pointer',
+                saving && 'opacity-50',
+              )}
+            >
+              {saving ? '…' : (t.category ?? 'Uncategorized')}
+            </button>
+            {editingCat && (
+              <div
+                ref={dropdownRef}
+                className="absolute top-full mt-1 left-0 z-20 w-52 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden"
+              >
+                <div className="p-2 border-b border-border-light dark:border-border-dark">
+                  <input
+                    autoFocus
+                    value={catSearch}
+                    onChange={e => setCatSearch(e.target.value)}
+                    onBlur={() => setTimeout(() => { setEditingCat(false); setCatSearch('') }, 150)}
+                    placeholder="Search..."
+                    className="w-full text-xs px-2 py-1.5 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-accent-500"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto py-1">
+                  {filteredCats.map(cat => (
+                    <button
+                      key={cat}
+                      onMouseDown={() => handleCatSelect(cat)}
+                      className="w-full text-left text-xs px-3 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                    >
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryDotColor(cat) }} />
+                      {cat}
+                    </button>
+                  ))}
+                  {filteredCats.length === 0 && <p className="text-xs text-gray-400 px-3 py-2">No matches</p>}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
