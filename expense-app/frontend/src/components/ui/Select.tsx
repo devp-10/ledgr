@@ -78,10 +78,13 @@ export function Select({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  // Close on scroll / resize so panel doesn't drift
+  // Close on scroll / resize so panel doesn't drift (but not when scrolling inside the panel)
   useEffect(() => {
     if (!open) return
-    const handler = () => doClose()
+    const handler = (e: Event) => {
+      if (panelRef.current?.contains(e.target as Node)) return
+      doClose()
+    }
     window.addEventListener('scroll', handler, true)
     window.addEventListener('resize', handler)
     return () => {

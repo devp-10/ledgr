@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import { TransactionFilters, Account } from '../../types'
 import { Select } from '../ui/Select'
+import { getCategoryEmoji } from '../ui/Badge'
 
 interface AdvancedFiltersProps {
   filters: TransactionFilters
@@ -33,7 +34,7 @@ export function AdvancedFilters({ filters, categories, accounts, onUpdate }: Adv
 
   const categoryOptions = [
     { value: '', label: 'All categories' },
-    ...categories.map(c => ({ value: c, label: c })),
+    ...categories.map(c => ({ value: c, label: `${getCategoryEmoji(c)} ${c}` })),
   ]
 
   return (

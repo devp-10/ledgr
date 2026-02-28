@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
-import { getCategoryDotColor } from '../ui/Badge'
+import { getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 
 interface CategoryDropdownProps {
   value: string
@@ -47,10 +47,13 @@ export function CategoryDropdown({ value, categories, onChange, className }: Cat
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  // Close on scroll / resize
+  // Close on scroll / resize (but not when scrolling inside the panel)
   useEffect(() => {
     if (!open) return
-    const handler = () => doClose()
+    const handler = (e: Event) => {
+      if (panelRef.current?.contains(e.target as Node)) return
+      doClose()
+    }
     window.addEventListener('scroll', handler, true)
     window.addEventListener('resize', handler)
     return () => {
@@ -80,7 +83,7 @@ export function CategoryDropdown({ value, categories, onChange, className }: Cat
           className,
         )}
       >
-        <span className="truncate">{value || 'Uncategorized'}</span>
+        <span className="truncate">{value ? `${getCategoryEmoji(value)} ${value}` : 'Uncategorized'}</span>
         <ChevronDown size={10} className="flex-shrink-0 text-gray-400" />
       </button>
 
@@ -117,7 +120,7 @@ export function CategoryDropdown({ value, categories, onChange, className }: Cat
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: getCategoryDotColor(cat) }}
                 />
-                {cat}
+                {getCategoryEmoji(cat)} {cat}
               </button>
             ))}
             {filtered.length === 0 && (
