@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { Transaction, TransactionType } from '../../types'
-import { getCategoryColor, getCategoryDotColor } from '../ui/Badge'
+import { getCategoryColor, getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 import { clsx } from 'clsx'
 import { format, parseISO } from 'date-fns'
 import { Pencil, Trash2, TrendingUp, TrendingDown, ArrowRightLeft, Check, X } from 'lucide-react'
@@ -66,11 +66,15 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
       ) return
       close()
     }
+    const scrollHandler = (e: Event) => {
+      if (catPanelRef.current?.contains(e.target as Node)) return
+      close()
+    }
     document.addEventListener('mousedown', clickHandler)
-    window.addEventListener('scroll', close, true)
+    window.addEventListener('scroll', scrollHandler, true)
     return () => {
       document.removeEventListener('mousedown', clickHandler)
-      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('scroll', scrollHandler, true)
     }
   }, [editingCat])
 
@@ -268,7 +272,7 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
                 saving && 'opacity-50'
               )}
             >
-              {saving ? '…' : (t.category ?? 'Uncategorized')}
+              {saving ? '…' : (t.category ? `${getCategoryEmoji(t.category)} ${t.category}` : 'Uncategorized')}
             </button>
             {editingCat && createPortal(
               <div
@@ -293,7 +297,7 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
                       className="w-full text-left text-xs px-3 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                     >
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryDotColor(cat) }} />
-                      {cat}
+                      {getCategoryEmoji(cat)} {cat}
                     </button>
                   ))}
                   {filteredCats.length === 0 && <p className="text-xs text-gray-400 px-3 py-2">No matches</p>}

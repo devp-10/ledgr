@@ -89,7 +89,7 @@ function aggregateTrend(trend: MonthTrend[]) {
 
 export function Reflect() {
   const addToast = useToastContext()
-  const [period, setPeriod] = useState<PeriodKey>('last_month')
+  const [period, setPeriod] = useState<PeriodKey>('this_year')
   const [compare, setCompare] = useState(false)
 
   // Main dashboard data for category breakdown (most recent period month)
@@ -277,11 +277,11 @@ export function Reflect() {
 
       {/* ── Row 3: Category Donut | Savings Rate ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
+        <Card className="h-full">
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[220px]">
             {loading ? (
               <div className="h-48 skeleton rounded-lg" />
             ) : (
@@ -293,11 +293,11 @@ export function Reflect() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="h-full">
           <CardHeader>
             <CardTitle>Savings Rate</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-[220px]">
             <SavingsRatePanel
               currentTrend={currentTrend}
               prevTrend={compare && prevTrend.length ? prevTrend : undefined}

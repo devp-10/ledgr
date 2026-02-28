@@ -67,7 +67,6 @@ export function PlanCharts({ groups, spendingData, totalSpending, loading }: Pla
   const variances: CategoryVariance[] = groups
     .flatMap(g =>
       g.categories
-        .filter(c => c.budget_amount > 0 || spendingData.find(d => d.category === c.name))
         .map(c => {
           const s     = spendingData.find(d => d.category === c.name)
           const spent = s ? Math.abs(s.amount) : 0

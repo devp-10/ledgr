@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Tag, Trash2, CheckCheck, Sparkles } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Select } from '../ui/Select'
+import { getCategoryEmoji } from '../ui/Badge'
 
 interface BulkActionsProps {
   count: number
@@ -56,7 +57,7 @@ export function BulkActions({
 
   const categoryOptions = [
     { value: '', label: 'Set category…' },
-    ...categories.map(c => ({ value: c, label: c })),
+    ...categories.map(c => ({ value: c, label: `${getCategoryEmoji(c)} ${c}` })),
   ]
 
   return (
