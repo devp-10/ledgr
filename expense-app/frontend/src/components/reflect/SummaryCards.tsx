@@ -12,12 +12,12 @@ function formatMoney(n: number) {
   return '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
-function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
+function Delta({ value, invert = false, suffix = '%' }: { value: number; invert?: boolean; suffix?: string }) {
   const pct = Math.abs(Math.round(value * 10) / 10)
   const isPositive = invert ? value < 0 : value > 0
   const isZero = value === 0
 
-  if (isZero) return <span className="text-xs text-gray-400 flex items-center gap-0.5"><Minus size={10} /> 0%</span>
+  if (isZero) return <span className="text-xs text-gray-400 flex items-center gap-0.5"><Minus size={10} /> 0{suffix}</span>
 
   return (
     <span className={clsx(
@@ -25,7 +25,7 @@ function Delta({ value, invert = false }: { value: number; invert?: boolean }) {
       isPositive ? 'text-status-positive' : 'text-status-negative'
     )}>
       {isPositive ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-      {pct}%
+      {pct}{suffix}
     </span>
   )
 }
@@ -40,12 +40,13 @@ interface StatCardProps {
   value: string
   delta?: number
   invertDelta?: boolean
+  deltaSuffix?: string
   icon: React.ReactNode
   iconColor: string
   loading?: boolean
 }
 
-function StatCard({ title, value, delta, invertDelta, icon, iconColor, loading }: StatCardProps) {
+function StatCard({ title, value, delta, invertDelta, deltaSuffix, icon, iconColor, loading }: StatCardProps) {
   if (loading) return (
     <div className="bg-surface dark:bg-[#171717] border border-border-light dark:border-border-dark rounded-lg p-5">
       <div className="flex items-start justify-between mb-4">
@@ -63,7 +64,7 @@ function StatCard({ title, value, delta, invertDelta, icon, iconColor, loading }
         <div className={clsx('w-9 h-9 rounded-lg flex items-center justify-center', iconColor)}>
           {icon}
         </div>
-        {delta !== undefined && <Delta value={delta} invert={invertDelta} />}
+        {delta !== undefined && <Delta value={delta} invert={invertDelta} suffix={deltaSuffix} />}
       </div>
       <p className="text-2xl font-bold font-money text-gray-900 dark:text-gray-100 tracking-tight">
         {value}
@@ -80,6 +81,8 @@ export function SummaryCards({ current, previous, loading }: SummaryCardsProps) 
   const prevSpending = Math.abs(previous?.total_spending ?? 0)
   const net = income - spending
   const savingsRate = income > 0 ? ((income - spending) / income) * 100 : 0
+  const prevSavingsRate = prevIncome > 0 ? ((prevIncome - prevSpending) / prevIncome) * 100 : 0
+  const savingsRateDelta = previous ? savingsRate - prevSavingsRate : undefined
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -112,6 +115,8 @@ export function SummaryCards({ current, previous, loading }: SummaryCardsProps) 
       <StatCard
         title="Savings Rate"
         value={`${Math.max(0, Math.round(savingsRate))}%`}
+        delta={savingsRateDelta}
+        deltaSuffix="pp"
         icon={<PiggyBank size={16} className="text-accent-500" />}
         iconColor="bg-accent-500/10"
         loading={loading}

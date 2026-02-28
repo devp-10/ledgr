@@ -6,8 +6,9 @@ import type { DashboardSummary, MonthTrend } from '../lib/api'
 import { SummaryCards } from '../components/reflect/SummaryCards'
 import { SavingsRatePanel } from '../components/reflect/SavingsRatePanel'
 import { CategoryDonut } from '../components/charts/CategoryDonut'
-import { SpendingIncomeBar } from '../components/charts/SpendingIncomeBar'
-import { TrendLine } from '../components/charts/TrendLine'
+import { NetCashFlowBar } from '../components/charts/NetCashFlowBar'
+import { SpendingCategoryBar } from '../components/charts/SpendingCategoryBar'
+import { IncomeBar } from '../components/charts/IncomeBar'
 import { Card, CardHeader, CardContent, CardTitle } from '../components/ui/Card'
 import { useToastContext } from '../App'
 
@@ -24,45 +25,58 @@ const PERIODS: { key: PeriodKey; label: string }[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+/**
+ * Returns the list of completed months for a given period.
+ * "Last Month/3/6" exclude the current in-progress month.
+ * "This Year" includes up to the current month.
+ */
+function getPeriodMonths(period: PeriodKey, now: Date): string[] {
+  switch (period) {
+    case 'this_year': {
+      const year = now.getFullYear()
+      const months: string[] = []
+      for (let m = 0; m <= now.getMonth(); m++) {
+        months.push(format(new Date(year, m, 1), 'yyyy-MM'))
+      }
+      return months
+    }
+    case 'last_month':
+      return [format(subMonths(now, 1), 'yyyy-MM')]
+    case 'last_3_months':
+      return [3, 2, 1].map(n => format(subMonths(now, n), 'yyyy-MM'))
+    case 'last_6_months':
+      return [6, 5, 4, 3, 2, 1].map(n => format(subMonths(now, n), 'yyyy-MM'))
+  }
+}
+
+/**
+ * Returns equivalent previous-period months for comparison.
+ * Shifts the period back by its own length.
+ */
+function getPrevPeriodMonths(period: PeriodKey, now: Date): string[] {
+  switch (period) {
+    case 'this_year': {
+      const prevYear = now.getFullYear() - 1
+      const months: string[] = []
+      for (let m = 0; m <= now.getMonth(); m++) {
+        months.push(format(new Date(prevYear, m, 1), 'yyyy-MM'))
+      }
+      return months
+    }
+    case 'last_month':
+      return [format(subMonths(now, 2), 'yyyy-MM')]
+    case 'last_3_months':
+      return [6, 5, 4].map(n => format(subMonths(now, n), 'yyyy-MM'))
+    case 'last_6_months':
+      return [12, 11, 10, 9, 8, 7].map(n => format(subMonths(now, n), 'yyyy-MM'))
+  }
+}
+
 /** Deduplicate + sort a combined trend array by month */
 function mergeTrends(a: MonthTrend[], b: MonthTrend[]): MonthTrend[] {
   const map = new Map<string, MonthTrend>()
   ;[...a, ...b].forEach(t => map.set(t.month, t))
   return [...map.values()].sort((x, y) => x.month.localeCompare(y.month))
-}
-
-function slicePeriod(trend: MonthTrend[], period: PeriodKey, now: Date): MonthTrend[] {
-  if (!trend.length) return []
-  switch (period) {
-    case 'this_year': {
-      const year = format(now, 'yyyy')
-      return trend.filter(t => t.month.startsWith(year))
-    }
-    case 'last_month':
-      return trend.slice(-1)
-    case 'last_3_months':
-      return trend.slice(-3)
-    case 'last_6_months':
-      return trend.slice(-6)
-  }
-}
-
-function slicePrevPeriod(trend: MonthTrend[], period: PeriodKey, now: Date): MonthTrend[] {
-  if (!trend.length) return []
-  switch (period) {
-    case 'this_year': {
-      const prevYear = format(subMonths(startOfYear(now), 1), 'yyyy')
-      return trend.filter(t => t.month.startsWith(prevYear))
-    }
-    case 'last_month':
-      return trend.slice(-2, -1)
-    case 'last_3_months':
-      // Need 6 months of trend to compute comparison
-      return trend.length >= 6 ? trend.slice(-6, -3) : []
-    case 'last_6_months':
-      // Need 12 months of trend to compute comparison
-      return trend.length >= 12 ? trend.slice(-12, -6) : []
-  }
 }
 
 function aggregateTrend(trend: MonthTrend[]) {
@@ -77,19 +91,34 @@ export function Reflect() {
   const addToast = useToastContext()
   const [period, setPeriod] = useState<PeriodKey>('last_month')
   const [compare, setCompare] = useState(false)
+
+  // Main dashboard data for category breakdown (most recent period month)
   const [mainData, setMainData] = useState<DashboardSummary | null>(null)
+  // All trend data (~13 months) built by merging two dashboard fetches
   const [allTrend, setAllTrend] = useState<MonthTrend[]>([])
+  // Per-month data for stacked category bar chart
+  const [periodMonthlyData, setPeriodMonthlyData] = useState<DashboardSummary[]>([])
+
   const [loading, setLoading] = useState(true)
+  const [catLoading, setCatLoading] = useState(true)
 
   const now = useMemo(() => new Date(), [])
+  const periodMonths = useMemo(() => getPeriodMonths(period, now), [period, now])
+  const prevPeriodMonths = useMemo(() => getPrevPeriodMonths(period, now), [period, now])
 
+  // ── Main fetch: trend + anchor category data ────────────────────────────────
   useEffect(() => {
     setLoading(true)
-    // Fetch current + 6-months-ago dashboard in parallel to get ~12 months of trend
-    const sixMonthsAgo = format(subMonths(now, 6), 'yyyy-MM')
+    setMainData(null)
+
+    // Anchor = most recent month in period (for spending_by_category)
+    const anchorMonth = periodMonths[periodMonths.length - 1]
+    // Old month = far enough back to cover comparison periods
+    const oldMonth = format(subMonths(now, 13), 'yyyy-MM')
+
     Promise.all([
-      api.getDashboard(),
-      api.getDashboard(sixMonthsAgo),
+      api.getDashboard(anchorMonth),
+      api.getDashboard(oldMonth),
     ])
       .then(([curr, old]) => {
         setMainData(curr)
@@ -97,23 +126,39 @@ export function Reflect() {
       })
       .catch(() => addToast('Failed to load dashboard data', 'error'))
       .finally(() => setLoading(false))
-  }, []) // eslint-disable-line
+  }, [period]) // eslint-disable-line
 
-  // Period-sliced trend data
-  const currentTrend = useMemo(() => slicePeriod(allTrend, period, now), [allTrend, period, now])
-  const prevTrend = useMemo(
-    () => compare ? slicePrevPeriod(allTrend, period, now) : [],
-    [allTrend, period, compare, now]
+  // ── Per-month category fetch for stacked spending bar ──────────────────────
+  useEffect(() => {
+    if (!periodMonths.length) return
+    setCatLoading(true)
+
+    // For single-month period, we already have the data from mainData; still
+    // fetch via this effect to keep logic uniform.
+    Promise.all(periodMonths.map(m => api.getDashboard(m)))
+      .then(setPeriodMonthlyData)
+      .catch(() => { /* non-critical */ })
+      .finally(() => setCatLoading(false))
+  }, [periodMonths.join(',')]) // eslint-disable-line
+
+  // ── Derived trend slices ───────────────────────────────────────────────────
+  const currentTrend = useMemo(
+    () => allTrend.filter(t => periodMonths.includes(t.month)),
+    [allTrend, periodMonths]
   )
 
-  // Aggregated stats for summary cards
+  const prevTrend = useMemo(
+    () => compare ? allTrend.filter(t => prevPeriodMonths.includes(t.month)) : [],
+    [allTrend, prevPeriodMonths, compare]
+  )
+
+  // ── Aggregated stats for summary cards ─────────────────────────────────────
   const currentStats = useMemo(() => aggregateTrend(currentTrend), [currentTrend])
   const prevStats = useMemo(
     () => prevTrend.length ? aggregateTrend(prevTrend) : null,
     [prevTrend]
   )
 
-  // Synthetic DashboardSummary objects for SummaryCards (only uses income/spending/net)
   const currentForCards = useMemo((): DashboardSummary | null => {
     if (!mainData) return null
     return {
@@ -139,7 +184,6 @@ export function Reflect() {
   }, [prevStats])
 
   const categoryData = mainData?.spending_by_category ?? []
-  const categoryTotal = currentStats.totalSpending
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -188,56 +232,58 @@ export function Reflect() {
       </div>
 
       {/* ── Summary cards ─────────────────────────────────────────────────── */}
-      <SummaryCards current={currentForCards} previous={compare ? prevForCards : null} loading={loading} />
+      <SummaryCards
+        current={currentForCards}
+        previous={compare ? prevForCards : null}
+        loading={loading}
+      />
 
-      {/* ── Row 1: Income & Spending bar (full width) ─────────────────────── */}
+      {/* ── Row 1: Net Cash Flow (full width) ─────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>Income &amp; Spending</CardTitle>
+          <CardTitle>Net Cash Flow</CardTitle>
         </CardHeader>
         <CardContent>
-          <SpendingIncomeBar data={currentTrend} />
+          {loading ? (
+            <div className="h-52 skeleton rounded-lg" />
+          ) : (
+            <NetCashFlowBar
+              data={currentTrend}
+              compareData={compare && prevTrend.length ? prevTrend : undefined}
+            />
+          )}
         </CardContent>
       </Card>
 
-      {/* ── Row 2: Spending trend | Income trend ──────────────────────────── */}
+      {/* ── Row 2: Spending by Category | Income ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Spending Trend</CardTitle>
+            <CardTitle>Spending</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="h-48 skeleton rounded-lg" />
-            ) : (
-              <TrendLine
-                data={currentTrend}
-                compareData={compare && prevTrend.length ? prevTrend : undefined}
-                mode="spending"
-              />
-            )}
+            <SpendingCategoryBar
+              periodData={periodMonthlyData}
+              loading={catLoading || loading}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Income Trend</CardTitle>
+            <CardTitle>Income</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="h-48 skeleton rounded-lg" />
+              <div className="h-52 skeleton rounded-lg" />
             ) : (
-              <TrendLine
-                data={currentTrend}
-                compareData={compare && prevTrend.length ? prevTrend : undefined}
-                mode="income"
-              />
+              <IncomeBar data={currentTrend} />
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ── Row 3: Category donut | Savings rate ──────────────────────────── */}
+      {/* ── Row 3: Category Donut | Savings Rate ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
@@ -247,7 +293,10 @@ export function Reflect() {
             {loading ? (
               <div className="h-48 skeleton rounded-lg" />
             ) : (
-              <CategoryDonut data={categoryData} total={categoryTotal} />
+              <CategoryDonut
+                data={categoryData}
+                total={currentStats.totalSpending}
+              />
             )}
           </CardContent>
         </Card>
