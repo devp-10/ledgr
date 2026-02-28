@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Check, AlertTriangle, Circle, Pencil, Trash2 } from 'lucide-react'
+import { Check, AlertTriangle, Circle, Pencil } from 'lucide-react'
 import { BudgetCategory } from '../../types'
 import { clsx } from 'clsx'
 
@@ -8,7 +8,6 @@ interface CategoryRowProps {
   spent: number
   onEditBudget: (id: string, amount: number) => void
   onOpenModal: (id: string) => void
-  onDelete: (id: string) => void
 }
 
 function formatMoney(n: number) {
@@ -21,10 +20,9 @@ function StatusIcon({ pct }: { pct: number }) {
   return <Check size={10} className="text-status-positive" />
 }
 
-export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDelete }: CategoryRowProps) {
+export function CategoryRow({ category, spent, onEditBudget, onOpenModal }: CategoryRowProps) {
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState(String(category.budget_amount))
-  const [confirmDelete, setConfirmDelete] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -38,22 +36,6 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDele
     const n = parseFloat(editVal.replace(/[^0-9.]/g, ''))
     if (!isNaN(n) && n >= 0) onEditBudget(category.id, n)
     setEditing(false)
-  }
-
-  if (confirmDelete) {
-    return (
-      <div className="flex items-center gap-3 py-2 px-3 bg-red-50 dark:bg-red-900/10">
-        <span className="flex-1 text-sm text-gray-500 dark:text-gray-400">
-          Delete <span className="font-medium text-gray-700 dark:text-gray-300">{category.emoji} {category.name}</span>?
-        </span>
-        <button onClick={() => onDelete(category.id)} className="text-xs text-status-negative hover:underline font-medium">
-          Confirm
-        </button>
-        <button onClick={() => setConfirmDelete(false)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-          Cancel
-        </button>
-      </div>
-    )
   }
 
   return (
@@ -118,14 +100,6 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal, onDele
           {formatMoney(available)}
         </span>
       </div>
-
-      {/* Trash — absolutely positioned, no layout impact */}
-      <button
-        onClick={() => setConfirmDelete(true)}
-        className="absolute right-2 opacity-0 group-hover/row:opacity-100 p-1 rounded text-gray-400 hover:text-status-negative transition-all"
-      >
-        <Trash2 size={13} />
-      </button>
     </div>
   )
 }

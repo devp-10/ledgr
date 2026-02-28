@@ -33,6 +33,7 @@ interface CategoryVariance {
   emoji: string
   name: string
   label: string
+  emojiLabel: string
   budgeted: number
   spent: number
   variance: number
@@ -43,14 +44,15 @@ const ACTUAL_OVER  = '#f87171'   // red-400
 const ACTUAL_OK    = '#34d399'   // emerald-400
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
+  const data = payload[0]?.payload
   const budgeted = payload.find((p: any) => p.dataKey === 'budgeted')?.value ?? 0
   const spent    = payload.find((p: any) => p.dataKey === 'spent')?.value ?? 0
   const over     = spent > budgeted
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-3 py-2 text-xs space-y-1 min-w-[130px]">
-      <p className="font-semibold text-gray-700 dark:text-gray-300">{label}</p>
+      <p className="font-semibold text-gray-700 dark:text-gray-300">{data?.label}</p>
       <p className="text-gray-500 dark:text-gray-400">Budgeted: <span className="font-money">{formatMoney(budgeted)}</span></p>
       <p className={over ? 'text-status-negative' : 'text-status-positive'}>
         Actual: <span className="font-money">{formatMoney(spent)}</span>
@@ -70,12 +72,13 @@ export function PlanCharts({ groups, spendingData, totalSpending, loading }: Pla
           const s     = spendingData.find(d => d.category === c.name)
           const spent = s ? Math.abs(s.amount) : 0
           return {
-            emoji:    c.emoji,
-            name:     c.name,
-            label:    c.emoji ? `${c.emoji} ${c.name}` : c.name,
-            budgeted: c.budget_amount,
+            emoji:      c.emoji,
+            name:       c.name,
+            label:      c.emoji ? `${c.emoji} ${c.name}` : c.name,
+            emojiLabel: c.emoji || '📦',
+            budgeted:   c.budget_amount,
             spent,
-            variance: c.budget_amount - spent,
+            variance:   c.budget_amount - spent,
           }
         })
     )
@@ -171,9 +174,9 @@ export function PlanCharts({ groups, spendingData, totalSpending, loading }: Pla
                 />
                 <YAxis
                   type="category"
-                  dataKey="label"
-                  width={110}
-                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  dataKey="emojiLabel"
+                  width={48}
+                  tick={{ fontSize: 16, fill: '#64748b' }}
                   axisLine={false}
                   tickLine={false}
                 />

@@ -30,6 +30,7 @@ export function Plan() {
     deleteCategory,
     addGroup,
     deleteGroup,
+    renameGroup,
   } = useBudgets()
 
   useEffect(() => {
@@ -114,7 +115,7 @@ export function Plan() {
                   onOpenModal={setSelectedCategoryId}
                   onAddCategory={handleAddCategory}
                   onDeleteGroup={handleDeleteGroup}
-                  onDeleteCategory={handleDeleteCategory}
+                  onRenameGroup={renameGroup}
                 />
               ))}
             </div>
