@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -37,23 +38,58 @@ export function Select({
   initiallyOpen,
   onClose,
 }: SelectProps) {
-  const [open, setOpen] = useState(!!initiallyOpen)
+  const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({})
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  const updatePosition = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect()
+      setPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+    }
+  }
+
+  const doClose = (callOnClose = true) => {
+    setOpen(false)
+    setSearch('')
+    if (callOnClose) onClose?.()
+  }
+
+  // Open on mount when initiallyOpen
+  useEffect(() => {
+    if (initiallyOpen) { updatePosition(); setOpen(true) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Close on outside click
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-        setSearch('')
-        onClose?.()
-      }
+      if (
+        triggerRef.current?.contains(e.target as Node) ||
+        panelRef.current?.contains(e.target as Node)
+      ) return
+      doClose()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [open, onClose])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Close on scroll / resize so panel doesn't drift
+  useEffect(() => {
+    if (!open) return
+    const handler = () => doClose()
+    window.addEventListener('scroll', handler, true)
+    window.addEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('scroll', handler, true)
+      window.removeEventListener('resize', handler)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const filtered = searchable && search
     ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
@@ -62,18 +98,14 @@ export function Select({
   const selected = options.find(o => o.value === value)
   const hasValue = !!selected
 
-  const close = () => { setOpen(false); setSearch('') }
-
-  const pick = (v: string) => {
-    onChange(v)
-    close()
-  }
+  const pick = (v: string) => { onChange(v); doClose(false) }
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => { if (!disabled) setOpen(o => !o) }}
+        onClick={() => { if (disabled) return; open ? doClose() : (updatePosition(), setOpen(true)) }}
         disabled={disabled}
         className={clsx(
           'w-full flex items-center justify-between gap-2 text-left',
@@ -101,8 +133,12 @@ export function Select({
         />
       </button>
 
-      {open && (
-        <div className="absolute top-full mt-1 left-0 z-50 min-w-full w-max max-w-xs bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={panelRef}
+          style={panelStyle}
+          className="w-max max-w-xs bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden"
+        >
           {searchable && (
             <div className="p-2 border-b border-border-light dark:border-border-dark">
               <input
@@ -135,7 +171,8 @@ export function Select({
               <p className="text-sm text-gray-400 px-3 py-2">No matches</p>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

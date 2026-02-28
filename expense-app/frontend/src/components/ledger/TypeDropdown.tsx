@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { TransactionType } from '../../types'
@@ -17,24 +18,55 @@ interface TypeDropdownProps {
 
 export function TypeDropdown({ value, onChange, className }: TypeDropdownProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({})
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
+  const updatePosition = () => {
+    if (triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect()
+      setPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+    }
+  }
+
+  const doClose = () => setOpen(false)
+
+  // Outside click
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (
+        triggerRef.current?.contains(e.target as Node) ||
+        panelRef.current?.contains(e.target as Node)
+      ) return
+      doClose()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Close on scroll / resize
+  useEffect(() => {
+    if (!open) return
+    const handler = () => doClose()
+    window.addEventListener('scroll', handler, true)
+    window.addEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('scroll', handler, true)
+      window.removeEventListener('resize', handler)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const selected = OPTIONS.find(o => o.value === value) ?? OPTIONS[0]
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => open ? doClose() : (updatePosition(), setOpen(true))}
         className={clsx(
           'w-full flex items-center justify-between gap-1 text-xs px-1.5 py-0.5 rounded',
           'border border-border-light dark:border-border-dark',
@@ -47,12 +79,16 @@ export function TypeDropdown({ value, onChange, className }: TypeDropdownProps) 
         <ChevronDown size={10} className="flex-shrink-0 text-gray-400" />
       </button>
 
-      {open && (
-        <div className="absolute top-full mt-1 left-0 z-30 w-32 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={panelRef}
+          style={panelStyle}
+          className="w-32 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden"
+        >
           {OPTIONS.map(opt => (
             <button
               key={opt.value}
-              onMouseDown={() => { onChange(opt.value); setOpen(false) }}
+              onMouseDown={() => { onChange(opt.value); doClose() }}
               className={clsx(
                 'w-full text-left text-xs px-3 py-1.5 transition-colors',
                 opt.value === value
@@ -63,7 +99,8 @@ export function TypeDropdown({ value, onChange, className }: TypeDropdownProps) 
               {opt.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

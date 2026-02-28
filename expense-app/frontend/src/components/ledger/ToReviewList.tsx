@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { Transaction, TransactionType, TransactionUpdate } from '../../types'
 import { EmptyState } from '../common/EmptyState'
 import { CheckSquare, Check, Trash2, Pencil, X, TrendingUp, TrendingDown, ArrowRightLeft } from 'lucide-react'
@@ -83,7 +84,28 @@ function ReviewRow({
   const [deleting, setDeleting]     = useState(false)
   const [editingCat, setEditingCat] = useState(false)
   const [catSearch, setCatSearch]   = useState('')
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const catBadgeRef = useRef<HTMLButtonElement>(null)
+  const catPanelRef = useRef<HTMLDivElement>(null)
+  const [catPanelStyle, setCatPanelStyle] = useState<CSSProperties>({})
+
+  // Close inline category picker on outside click or scroll
+  useEffect(() => {
+    if (!editingCat) return
+    const close = () => { setEditingCat(false); setCatSearch('') }
+    const clickHandler = (e: MouseEvent) => {
+      if (
+        catBadgeRef.current?.contains(e.target as Node) ||
+        catPanelRef.current?.contains(e.target as Node)
+      ) return
+      close()
+    }
+    document.addEventListener('mousedown', clickHandler)
+    window.addEventListener('scroll', close, true)
+    return () => {
+      document.removeEventListener('mousedown', clickHandler)
+      window.removeEventListener('scroll', close, true)
+    }
+  }, [editingCat])
 
   const filteredCats = catSearch
     ? categories.filter(c => c.toLowerCase().includes(catSearch.toLowerCase()))
@@ -268,11 +290,19 @@ function ReviewRow({
         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{t.description}</p>
       </div>
 
-      <div className={clsx('relative', COL.category)}>
+      <div className={COL.category}>
         {t.transaction_type === 'expense' && (
           <>
             <button
-              onClick={() => setEditingCat(e => !e)}
+              ref={catBadgeRef}
+              onClick={() => {
+                if (editingCat) { setEditingCat(false); setCatSearch(''); return }
+                if (catBadgeRef.current) {
+                  const r = catBadgeRef.current.getBoundingClientRect()
+                  setCatPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+                }
+                setEditingCat(true)
+              }}
               disabled={saving}
               className={clsx(
                 'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium transition-all max-w-full truncate',
@@ -283,17 +313,17 @@ function ReviewRow({
             >
               {saving ? '…' : (t.category ?? 'Uncategorized')}
             </button>
-            {editingCat && (
+            {editingCat && createPortal(
               <div
-                ref={dropdownRef}
-                className="absolute top-full mt-1 left-0 z-20 w-52 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden"
+                ref={catPanelRef}
+                style={catPanelStyle}
+                className="w-52 bg-surface dark:bg-[#171717] rounded-lg border border-border-light dark:border-border-dark shadow-soft overflow-hidden"
               >
                 <div className="p-2 border-b border-border-light dark:border-border-dark">
                   <input
                     autoFocus
                     value={catSearch}
                     onChange={e => setCatSearch(e.target.value)}
-                    onBlur={() => setTimeout(() => { setEditingCat(false); setCatSearch('') }, 150)}
                     placeholder="Search..."
                     className="w-full text-xs px-2 py-1.5 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-accent-500"
                   />
@@ -311,7 +341,8 @@ function ReviewRow({
                   ))}
                   {filteredCats.length === 0 && <p className="text-xs text-gray-400 px-3 py-2">No matches</p>}
                 </div>
-              </div>
+              </div>,
+              document.body,
             )}
           </>
         )}
