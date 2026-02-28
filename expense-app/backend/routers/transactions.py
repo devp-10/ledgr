@@ -74,7 +74,7 @@ async def import_transactions(request: ImportRequest, background_tasks: Backgrou
     inserted_pairs: list = []
     with get_connection() as conn:
         for t in to_insert:
-            tx_type = _infer_type(t.amount)
+            tx_type = t.transaction_type or _infer_type(t.amount)
             cursor = conn.execute(
                 """INSERT OR IGNORE INTO transactions
                    (hash, date, description, amount, transaction_type, notes, reviewed, source_file, account_id)

@@ -220,6 +220,7 @@ export interface ParsedTransaction {
   description: string
   amount: number
   hash: string
+  transaction_type?: string
 }
 
 export interface UploadPreviewResponse {

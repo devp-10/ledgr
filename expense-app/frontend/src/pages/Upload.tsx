@@ -148,6 +148,7 @@ export function Upload() {
                   <tr>
                     <th className="px-4 py-2 text-left text-gray-500 dark:text-gray-400">Date</th>
                     <th className="px-4 py-2 text-left text-gray-500 dark:text-gray-400">Description</th>
+                    <th className="px-4 py-2 text-left text-gray-500 dark:text-gray-400">Type</th>
                     <th className="px-4 py-2 text-right text-gray-500 dark:text-gray-400">Amount</th>
                   </tr>
                 </thead>
@@ -156,6 +157,21 @@ export function Upload() {
                     <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="px-4 py-2 text-gray-500 dark:text-gray-400 whitespace-nowrap">{t.date}</td>
                       <td className="px-4 py-2 text-gray-900 dark:text-gray-100 max-w-xs truncate">{t.description}</td>
+                      <td className="px-4 py-2">
+                        {t.transaction_type ? (
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${
+                            t.transaction_type === 'income'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                              : t.transaction_type === 'expense'
+                              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                          }`}>
+                            {t.transaction_type}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>
+                        )}
+                      </td>
                       <td className={`px-4 py-2 text-right font-medium tabular-nums whitespace-nowrap ${
                         t.amount < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'
                       }`}>

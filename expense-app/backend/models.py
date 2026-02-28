@@ -158,6 +158,7 @@ class ParsedTransaction(BaseModel):
     description: str
     amount: float
     hash: str
+    transaction_type: Optional[str] = None
 
 
 class UploadPreviewResponse(BaseModel):
