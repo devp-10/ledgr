@@ -116,10 +116,10 @@ export const api = {
   getAccounts: () =>
     request<Account[]>('/accounts'),
 
-  addAccount: (name: string) =>
+  addAccount: (name: string, account_type: string = 'bank_account') =>
     request<Account>('/accounts', {
       method: 'POST',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, account_type }),
     }),
 
   deleteAccount: (id: number) =>
@@ -167,6 +167,7 @@ export type TransactionType = 'expense' | 'income' | 'transfer'
 export interface Account {
   id: number
   name: string
+  account_type: string
   created_at: string
   transaction_count: number
 }

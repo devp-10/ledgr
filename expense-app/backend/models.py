@@ -86,12 +86,14 @@ TRANSACTION_TYPES = ["expense", "income", "transfer"]
 class Account(BaseModel):
     id: int
     name: str
+    account_type: str = 'bank_account'
     created_at: str
     transaction_count: int = 0
 
 
 class CreateAccountRequest(BaseModel):
     name: str
+    account_type: str = 'bank_account'
 
 
 class Transaction(BaseModel):

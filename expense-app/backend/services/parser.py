@@ -95,22 +95,6 @@ def parse_file(content: bytes, filename: str) -> Tuple[List[ParsedTransaction], 
     if not has_amount and not has_debit_credit:
         raise ValueError("Could not detect amount column(s). Expected: Amount, or Debit/Credit columns.")
 
-    # Pre-scan: detect CC-style CSVs where expenses are exported as positive amounts.
-    # Signal: any row where an expense-type keyword appears AND amount is positive.
-    # Bank-style CSVs already have correct signs (debits negative, credits positive),
-    # so sign correction must only run for CC-style files.
-    is_cc_style = False
-    if "tx_type" in col_map and has_amount:
-        for _, srow in df.iterrows():
-            try:
-                tv = str(srow.get(col_map["tx_type"], "")).strip().lower()
-                av = _to_float(srow[col_map["amount"]])
-                if any(kw in tv for kw in _EXPENSE_TYPE_KEYWORDS) and av > 0:
-                    is_cc_style = True
-                    break
-            except Exception:
-                continue
-
     transactions = []
     for _, row in df.iterrows():
         try:
@@ -127,17 +111,10 @@ def parse_file(content: bytes, filename: str) -> Tuple[List[ParsedTransaction], 
 
             if has_amount:
                 amount = _to_float(row[col_map["amount"]])
-                # Use type column when available: correct signs and classify type
+                # Classify type from type column keyword (no sign correction here —
+                # sign correction happens at import time based on account type)
                 if "tx_type" in col_map:
                     type_val = str(row.get(col_map["tx_type"], "")).strip().lower()
-                    # Sign correction only for CC-style files (expenses exported as positive)
-                    if is_cc_style:
-                        is_expense = any(kw in type_val for kw in _EXPENSE_TYPE_KEYWORDS)
-                        is_income = any(kw in type_val for kw in _INCOME_TYPE_KEYWORDS)
-                        if is_expense and amount > 0:
-                            amount = -amount
-                        elif is_income and amount < 0:
-                            amount = -amount
                     transaction_type = _classify_type(type_val)
             else:
                 debit = _to_float(row.get(col_map.get("debit", "__missing__"), 0))

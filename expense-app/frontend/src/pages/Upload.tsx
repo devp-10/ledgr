@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api, ParsedTransaction, UploadPreviewResponse, ImportResponse } from '../lib/api'
+import { api, Account, ParsedTransaction, UploadPreviewResponse, ImportResponse } from '../lib/api'
 import { FileUpload } from '../components/FileUpload'
 import { useToastContext } from '../App'
 import { POLL_INTERVAL_MS } from '../constants'
@@ -21,9 +21,12 @@ export function Upload() {
   const [importResult, setImportResult] = useState<ImportResponse | null>(null)
   const [catProgress, setCatProgress] = useState({ completed: 0, total: 0 })
   const [error, setError] = useState<string | null>(null)
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
+    api.getAccounts().then(setAccounts).catch(() => {})
     return () => {
       if (pollRef.current) clearInterval(pollRef.current)
     }
@@ -51,6 +54,7 @@ export function Upload() {
       const result = await api.importTransactions({
         transactions: preview.transactions,
         source_file: currentFile.name,
+        account_id: selectedAccountId,
         auto_categorize: true,
       })
       setImportResult(result)
@@ -93,8 +97,12 @@ export function Upload() {
     setPreview(null)
     setCurrentFile(null)
     setImportResult(null)
+    setSelectedAccountId(undefined)
     setError(null)
   }
+
+  const selectedAccount = accounts.find(a => a.id === selectedAccountId)
+  const newCount = preview ? preview.total_rows - preview.duplicate_count : 0
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -122,9 +130,7 @@ export function Upload() {
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Already imported</div>
               </div>
               <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {preview.total_rows - preview.duplicate_count}
-                </div>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{newCount}</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">New transactions</div>
               </div>
             </div>
@@ -184,13 +190,42 @@ export function Upload() {
             </div>
           </div>
 
+          {/* Account selector (required) */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Account <span className="text-red-400">*</span>
+              {selectedAccount && (
+                <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                  {selectedAccount.account_type === 'credit_card' ? '💳 Credit Card' : '🏦 Bank Account'}
+                </span>
+              )}
+            </label>
+            <select
+              value={selectedAccountId ?? ''}
+              onChange={e => setSelectedAccountId(e.target.value ? Number(e.target.value) : undefined)}
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="" disabled>Select account...</option>
+              {accounts.map(a => (
+                <option key={a.id} value={a.id}>
+                  {a.account_type === 'credit_card' ? '💳' : '🏦'} {a.name}
+                </option>
+              ))}
+            </select>
+            {accounts.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+                No accounts yet — create one in the Accounts menu in the top bar.
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-3">
             <button
               onClick={handleImport}
-              disabled={preview.total_rows - preview.duplicate_count === 0}
+              disabled={newCount === 0 || !selectedAccountId}
               className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-xl font-medium transition-colors disabled:cursor-not-allowed"
             >
-              Import {preview.total_rows - preview.duplicate_count} transactions
+              Import {newCount} transactions
             </button>
             <button
               onClick={reset}

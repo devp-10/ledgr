@@ -10,6 +10,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS accounts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL,
+    account_type TEXT NOT NULL DEFAULT 'bank_account',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -105,6 +106,10 @@ def init_db():
             conn.execute("ALTER TABLE transactions ADD COLUMN reviewed INTEGER NOT NULL DEFAULT 1")
         if "linked_transaction_id" not in cols:
             conn.execute("ALTER TABLE transactions ADD COLUMN linked_transaction_id INTEGER REFERENCES transactions(id)")
+        # Migrate accounts table
+        acct_cols = [r["name"] for r in conn.execute("PRAGMA table_info(accounts)").fetchall()]
+        if "account_type" not in acct_cols:
+            conn.execute("ALTER TABLE accounts ADD COLUMN account_type TEXT NOT NULL DEFAULT 'bank_account'")
         # Seed budget defaults if tables are empty
         count = conn.execute("SELECT COUNT(*) FROM budget_groups").fetchone()[0]
         if count == 0:
