@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { format, subMonths, startOfYear } from 'date-fns'
-import { ChevronDown } from 'lucide-react'
 import { api } from '../lib/api'
+import { Select } from '../components/ui/Select'
 import type { DashboardSummary, MonthTrend } from '../lib/api'
 import { SummaryCards } from '../components/reflect/SummaryCards'
 import { SavingsRatePanel } from '../components/reflect/SavingsRatePanel'
@@ -192,19 +192,11 @@ export function Reflect() {
       <div className="flex items-center justify-between gap-4">
 
         {/* Period dropdown */}
-        <div className="relative">
-          <select
+        <div className="w-44">
+          <Select
             value={period}
-            onChange={e => setPeriod(e.target.value as PeriodKey)}
-            className="appearance-none pl-3.5 pr-8 py-2 text-sm font-medium rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] text-gray-700 dark:text-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-500/30 transition-shadow"
-          >
-            {PERIODS.map(p => (
-              <option key={p.key} value={p.key}>{p.label}</option>
-            ))}
-          </select>
-          <ChevronDown
-            size={14}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            onChange={v => setPeriod(v as PeriodKey)}
+            options={PERIODS.map(p => ({ value: p.key, label: p.label }))}
           />
         </div>
 

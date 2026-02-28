@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, X } from 'lucide-react'
 import { TransactionFilters, Account } from '../../types'
+import { Select } from '../ui/Select'
 
 interface AdvancedFiltersProps {
   filters: TransactionFilters
@@ -17,6 +18,23 @@ export function AdvancedFilters({ filters, categories, accounts, onUpdate }: Adv
 
   const inputCls = 'w-full rounded-md border border-border-light dark:border-border-dark bg-surface dark:bg-white/5 text-sm text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500'
   const labelCls = 'text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block'
+
+  const accountOptions = [
+    { value: '', label: 'All accounts' },
+    ...accounts.map(a => ({ value: String(a.id), label: a.name })),
+  ]
+
+  const typeOptions = [
+    { value: '', label: 'All types' },
+    { value: 'expense', label: 'Expense' },
+    { value: 'income', label: 'Income' },
+    { value: 'transfer', label: 'Transfer' },
+  ]
+
+  const categoryOptions = [
+    { value: '', label: 'All categories' },
+    ...categories.map(c => ({ value: c, label: c })),
+  ]
 
   return (
     <div className="rounded-lg border border-border-light dark:border-border-dark bg-surface dark:bg-[#171717] overflow-hidden">
@@ -36,28 +54,30 @@ export function AdvancedFilters({ filters, categories, accounts, onUpdate }: Adv
           <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
               <label className={labelCls}>Account</label>
-              <select value={filters.account_id ?? ''} onChange={e => onUpdate({ account_id: e.target.value ? Number(e.target.value) : undefined })} className={inputCls}>
-                <option value="">All accounts</option>
-                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
+              <Select
+                value={String(filters.account_id ?? '')}
+                onChange={v => onUpdate({ account_id: v ? Number(v) : undefined })}
+                options={accountOptions}
+              />
             </div>
 
             <div>
               <label className={labelCls}>Type</label>
-              <select value={filters.transaction_type ?? ''} onChange={e => onUpdate({ transaction_type: e.target.value || undefined })} className={inputCls}>
-                <option value="">All types</option>
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
-                <option value="transfer">Transfer</option>
-              </select>
+              <Select
+                value={filters.transaction_type ?? ''}
+                onChange={v => onUpdate({ transaction_type: v || undefined })}
+                options={typeOptions}
+              />
             </div>
 
             <div>
               <label className={labelCls}>Category</label>
-              <select value={filters.category ?? ''} onChange={e => onUpdate({ category: e.target.value || undefined })} className={inputCls}>
-                <option value="">All categories</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                value={filters.category ?? ''}
+                onChange={v => onUpdate({ category: v || undefined })}
+                options={categoryOptions}
+                searchable
+              />
             </div>
 
             <div>

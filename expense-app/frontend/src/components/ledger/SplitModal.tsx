@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Transaction, SplitItem } from '../../types'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
+import { Select } from '../ui/Select'
 import { Plus, Trash2 } from 'lucide-react'
 
 interface SplitModalProps {
@@ -75,14 +76,18 @@ export function SplitModal({ transaction: t, categories, onSplit, onClose }: Spl
                     className="w-full text-sm pl-6 pr-2 py-1.5 rounded border border-border-light dark:border-border-dark bg-surface dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-accent-500"
                   />
                 </div>
-                <select
-                  value={s.category ?? ''}
-                  onChange={e => update(i, 'category', e.target.value)}
-                  className="col-span-2 text-sm px-2 py-1.5 rounded border border-border-light dark:border-border-dark bg-surface dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-accent-500"
-                >
-                  <option value="">No category</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <div className="col-span-2">
+                  <Select
+                    value={s.category ?? ''}
+                    onChange={v => update(i, 'category', v)}
+                    options={[
+                      { value: '', label: 'No category' },
+                      ...categories.map(c => ({ value: c, label: c })),
+                    ]}
+                    searchable
+                    className="py-1.5 text-sm"
+                  />
+                </div>
               </div>
               <button
                 onClick={() => removeSplit(i)}

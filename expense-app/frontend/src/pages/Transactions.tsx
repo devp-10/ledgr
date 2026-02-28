@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { api, PaginatedTransactions, Transaction, TransactionFilters } from '../lib/api'
 import { TransactionTable } from '../components/TransactionTable'
+import { Select } from '../components/ui/Select'
 import { useToastContext } from '../App'
 
 const PAGE_SIZE = 50
@@ -141,14 +142,15 @@ export function Transactions() {
             onChange={e => setSearch(e.target.value)}
             className="col-span-2 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
-          <select
+          <Select
             value={filterCategory}
-            onChange={e => setFilterCategory(e.target.value)}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+            onChange={setFilterCategory}
+            options={[
+              { value: '', label: 'All categories' },
+              ...categories.map(c => ({ value: c, label: c })),
+            ]}
+            searchable
+          />
           <input
             type="date"
             value={dateFrom}
@@ -201,14 +203,18 @@ export function Transactions() {
           <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
             {selectedIds.size} selected
           </span>
-          <select
-            value={bulkCategory}
-            onChange={e => setBulkCategory(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-blue-300 dark:border-blue-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Re-categorize as...</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <div className="flex-1 max-w-[200px]">
+            <Select
+              value={bulkCategory}
+              onChange={setBulkCategory}
+              options={[
+                { value: '', label: 'Re-categorize as…' },
+                ...categories.map(c => ({ value: c, label: c })),
+              ]}
+              searchable
+              className="py-1.5"
+            />
+          </div>
           <button
             onClick={handleBulkUpdate}
             disabled={!bulkCategory}

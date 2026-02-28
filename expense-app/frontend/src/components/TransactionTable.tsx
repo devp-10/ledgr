@@ -2,6 +2,7 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import { Transaction } from '../lib/api'
 import { CategoryBadge } from './CategoryBadge'
+import { Select } from './ui/Select'
 
 interface Props {
   transactions: Transaction[]
@@ -42,32 +43,25 @@ function EditableCategory({ transaction, categories, onCategoryChange }: Editabl
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newCat = e.target.value
-    setSaving(true)
-    try {
-      await onCategoryChange(transaction.id, newCat)
-    } finally {
-      setSaving(false)
-      setEditing(false)
-    }
-  }
-
   if (editing) {
     return (
-      <select
-        autoFocus
-        defaultValue={transaction.category || ''}
-        onChange={handleChange}
-        onBlur={() => setEditing(false)}
+      <Select
+        value={transaction.category ?? ''}
+        onChange={async (cat) => {
+          setSaving(true)
+          try { await onCategoryChange(transaction.id, cat) }
+          finally { setSaving(false); setEditing(false) }
+        }}
+        onClose={() => setEditing(false)}
+        initiallyOpen
+        searchable
         disabled={saving}
-        className="text-xs border border-blue-300 rounded-lg px-2 py-1 bg-white dark:bg-gray-800 dark:border-blue-600 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-      >
-        <option value="">Uncategorized</option>
-        {categories.map(c => (
-          <option key={c} value={c}>{c}</option>
-        ))}
-      </select>
+        options={[
+          { value: '', label: 'Uncategorized' },
+          ...categories.map(c => ({ value: c, label: c })),
+        ]}
+        className="py-1 text-xs"
+      />
     )
   }
 

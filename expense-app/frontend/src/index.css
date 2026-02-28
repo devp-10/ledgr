@@ -123,6 +123,12 @@
   }
 }
 
+/* Dark mode: render native controls (checkboxes, date pickers) in dark scheme */
+.dark input[type="checkbox"],
+.dark input[type="date"] {
+  color-scheme: dark;
+}
+
 @media print {
   nav, .no-print { display: none !important; }
 }
