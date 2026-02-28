@@ -102,6 +102,17 @@ async def import_transactions(request: ImportRequest, background_tasks: Backgrou
     )
 
 
+def _load_budget_rules() -> list:
+    """Load all budget rules with their associated category names."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            """SELECT br.match_type, br.pattern, bc.name AS category_name
+               FROM budget_rules br
+               JOIN budget_categories bc ON br.category_id = bc.id"""
+        ).fetchall()
+    return [{"match_type": r["match_type"], "pattern": r["pattern"], "category_name": r["category_name"]} for r in rows]
+
+
 async def _run_categorization(job_id: str, ids: list, descriptions: list):
     total = len(ids)
     _categorization_progress[job_id] = {"total": total, "completed": 0, "status": "running"}
@@ -110,7 +121,8 @@ async def _run_categorization(job_id: str, ids: list, descriptions: list):
         _categorization_progress[job_id]["completed"] = completed
 
     try:
-        await categorizer.categorize_transactions(ids, descriptions, on_progress)
+        rules_with_categories = _load_budget_rules()
+        await categorizer.categorize_transactions(ids, descriptions, on_progress, rules_with_categories)
         _categorization_progress[job_id]["status"] = "complete"
         _categorization_progress[job_id]["completed"] = total
     except Exception as e:

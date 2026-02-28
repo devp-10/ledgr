@@ -113,6 +113,15 @@ export function useBudgets() {
     }
   }, [reload])
 
+  const renameGroup = useCallback(async (id: string, name: string) => {
+    setGroups(prev => prev.map(g => g.id === id ? { ...g, name } : g))
+    try {
+      await api.updateGroup(id, { name })
+    } catch {
+      reload()
+    }
+  }, [reload])
+
   return {
     groups,
     loading,
@@ -125,5 +134,6 @@ export function useBudgets() {
     deleteCategory,
     addGroup,
     deleteGroup,
+    renameGroup,
   }
 }

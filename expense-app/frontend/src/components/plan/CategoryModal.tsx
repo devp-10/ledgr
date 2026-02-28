@@ -25,6 +25,7 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
   const [newRule, setNewRule] = useState({ match_type: 'contains' as BudgetRule['match_type'], pattern: '' })
   const [testInput, setTestInput] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [regexError, setRegexError] = useState('')
 
   useEffect(() => {
     if (category) {
@@ -35,6 +36,7 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
       setRules(category.rules ?? [])
       setTestInput('')
       setNewRule({ match_type: 'contains', pattern: '' })
+      setRegexError('')
     }
   }, [category])
 
@@ -66,11 +68,30 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
 
   const addRule = () => {
     if (!newRule.pattern.trim()) return
+    if (newRule.match_type === 'regex') {
+      try {
+        new RegExp(newRule.pattern)
+      } catch (e) {
+        setRegexError('Invalid regex: ' + (e as Error).message)
+        return
+      }
+    }
+    setRegexError('')
     setRules(prev => [...prev, { id: Date.now().toString(), ...newRule, category_id: category.id }])
     setNewRule({ match_type: 'contains', pattern: '' })
   }
 
   const removeRule = (id: string) => setRules(prev => prev.filter(r => r.id !== id))
+
+  const handlePatternChange = (pattern: string) => {
+    setNewRule(r => ({ ...r, pattern }))
+    if (regexError) setRegexError('')
+  }
+
+  const handleMatchTypeChange = (match_type: BudgetRule['match_type']) => {
+    setNewRule(r => ({ ...r, match_type }))
+    if (regexError) setRegexError('')
+  }
 
   return (
     <Modal open={open} onClose={onClose} title="Edit Category" size="lg">
@@ -112,19 +133,23 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
             Auto-Categorization Rules
           </h4>
 
-          {/* Existing rules */}
-          <div className="space-y-2 mb-3">
-            {rules.map(rule => (
-              <div key={rule.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-sm">
-                <span className="text-gray-500 dark:text-gray-400 text-xs">{rule.match_type}</span>
-                <span className="flex-1 font-mono text-xs text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700">
-                  {rule.pattern}
-                </span>
-                <button onClick={() => removeRule(rule.id)} className="text-gray-400 hover:text-danger-500 transition-colors">
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+          {/* Existing rules — fixed-height scrollable box */}
+          <div className="max-h-36 overflow-y-auto space-y-1.5 mb-3 rounded-lg border border-gray-100 dark:border-gray-700/50 p-1.5 bg-gray-50/50 dark:bg-gray-800/30">
+            {rules.length === 0 ? (
+              <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-2">No rules yet</p>
+            ) : (
+              rules.map(rule => (
+                <div key={rule.id} className="flex items-center gap-2 p-2 rounded-md bg-white dark:bg-gray-700/60 text-sm border border-gray-100 dark:border-gray-700">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs shrink-0">{rule.match_type}</span>
+                  <span className="flex-1 font-mono text-xs text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 truncate">
+                    {rule.pattern}
+                  </span>
+                  <button onClick={() => removeRule(rule.id)} className="shrink-0 text-gray-400 hover:text-danger-500 transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
 
           {/* New rule editor */}
@@ -132,19 +157,27 @@ export function CategoryModal({ category, groups, open, onClose, onSave, onDelet
             <div className="flex gap-2">
               <select
                 value={newRule.match_type}
-                onChange={e => setNewRule(r => ({ ...r, match_type: e.target.value as BudgetRule['match_type'] }))}
+                onChange={e => handleMatchTypeChange(e.target.value as BudgetRule['match_type'])}
                 className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
               >
                 {MATCH_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
               </select>
               <input
                 value={newRule.pattern}
-                onChange={e => setNewRule(r => ({ ...r, pattern: e.target.value }))}
+                onChange={e => handlePatternChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') addRule() }}
                 placeholder="Pattern (e.g. WHOLE FOODS)"
-                className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 placeholder:text-gray-400"
+                className={`flex-1 rounded-lg border bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-gray-100 px-3 py-2 focus:outline-none focus:ring-2 placeholder:text-gray-400 ${
+                  regexError
+                    ? 'border-danger-500 focus:ring-danger-500/20'
+                    : 'border-gray-200 dark:border-gray-700 focus:ring-primary-500/20 focus:border-primary-500'
+                }`}
               />
               <Button size="sm" variant="secondary" onClick={addRule}><Plus size={14} />Add</Button>
             </div>
+            {regexError && (
+              <p className="text-xs text-danger-500 dark:text-danger-400">{regexError}</p>
+            )}
 
             {/* Test input */}
             <div className="flex items-center gap-2">

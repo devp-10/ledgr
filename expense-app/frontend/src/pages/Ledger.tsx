@@ -134,6 +134,8 @@ export function Ledger() {
     }
   }, [selectedIds, active, addToast])
 
+  const [aiProgress, setAiProgress] = useState<{ completed: number; total: number } | null>(null)
+
   const handleBulkAICategorize = useCallback(async () => {
     const ids = [...selectedIds]
     try {
@@ -143,6 +145,7 @@ export function Ledger() {
           const poll = setInterval(async () => {
             try {
               const status = await api.getCategorizationStatus(result.job_id!)
+              setAiProgress({ completed: status.completed, total: status.total })
               if (status.status === 'complete' || status.status.startsWith('error')) {
                 clearInterval(poll)
                 resolve()
@@ -154,10 +157,12 @@ export function Ledger() {
           }, 1000)
         })
       }
+      setAiProgress(null)
       await allTx.refetch()
       setSelectedIds(new Set())
       addToast(`AI categorized ${result.total} transaction${result.total !== 1 ? 's' : ''}`, 'success')
     } catch {
+      setAiProgress(null)
       addToast('AI categorization failed', 'error')
     }
   }, [selectedIds, allTx, addToast])
@@ -255,6 +260,7 @@ export function Ledger() {
           onDelete={handleBulkDelete}
           onAICategorize={view === 'all' ? handleBulkAICategorize : undefined}
           onDeselect={() => setSelectedIds(new Set())}
+          aiProgress={aiProgress ?? undefined}
         />
       )}
 

@@ -1,3 +1,4 @@
+import re
 import uuid
 from fastapi import APIRouter, HTTPException
 
@@ -138,6 +139,15 @@ def update_category(cat_id: str, req: UpdateCategoryRequest):
         )
 
         if req.rules is not None:
+            for rule in req.rules:
+                if rule.match_type == 'regex':
+                    try:
+                        re.compile(rule.pattern)
+                    except re.error as exc:
+                        raise HTTPException(
+                            status_code=422,
+                            detail=f"Invalid regex pattern '{rule.pattern}': {exc}",
+                        )
             conn.execute("DELETE FROM budget_rules WHERE category_id=?", (cat_id,))
             for rule in req.rules:
                 rule_id = rule.id if rule.id else str(uuid.uuid4())
