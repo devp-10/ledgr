@@ -15,7 +15,7 @@ function formatMoney(n: number) {
 function Delta({ value, invert = false, suffix = '%' }: { value: number; invert?: boolean; suffix?: string }) {
   const pct = Math.abs(Math.round(value * 10) / 10)
   const isPositive = invert ? value < 0 : value > 0
-  const isZero = value === 0
+  const isZero = pct === 0
 
   if (isZero) return <span className="text-xs text-gray-400 flex items-center gap-0.5"><Minus size={10} /> 0{suffix}</span>
 
@@ -89,7 +89,7 @@ export function SummaryCards({ current, previous, loading }: SummaryCardsProps) 
       <StatCard
         title="Total Income"
         value={formatMoney(income)}
-        delta={pctChange(income, prevIncome)}
+        delta={previous ? pctChange(income, prevIncome) : undefined}
         icon={<TrendingUp size={16} className="text-status-positive" />}
         iconColor="bg-status-positive-bg dark:bg-emerald-900/30"
         loading={loading}
@@ -97,7 +97,7 @@ export function SummaryCards({ current, previous, loading }: SummaryCardsProps) 
       <StatCard
         title="Total Spending"
         value={formatMoney(spending)}
-        delta={pctChange(spending, prevSpending)}
+        delta={previous ? pctChange(spending, prevSpending) : undefined}
         invertDelta
         icon={<TrendingDown size={16} className="text-accent-500" />}
         iconColor="bg-accent-500/10"

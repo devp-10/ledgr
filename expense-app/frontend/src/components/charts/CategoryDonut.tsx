@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts'
 import { useState } from 'react'
 import { SpendingCategory } from '../../types'
-import { getCategoryDotColor } from '../ui/Badge'
+import { getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 
 interface CategoryDonutProps {
   data: SpendingCategory[]
@@ -98,7 +98,9 @@ export function CategoryDonut({ data, total }: CategoryDonutProps) {
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: getCategoryDotColor(item.category) }}
               />
-              <span className="text-gray-700 dark:text-gray-300 truncate text-xs">{item.category}</span>
+              <span className="text-gray-700 dark:text-gray-300 truncate text-xs">
+                {getCategoryEmoji(item.category)} {item.category}
+              </span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-gray-400 dark:text-gray-500 text-xs w-7 text-right">

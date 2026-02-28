@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { format, parseISO } from 'date-fns'
 import { DashboardSummary } from '../../lib/api'
-import { getCategoryDotColor } from '../ui/Badge'
+import { getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 
 interface SpendingCategoryBarProps {
   periodData: DashboardSummary[]
@@ -29,7 +29,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             <div key={p.dataKey} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.fill }} />
-                <span className="text-gray-600 dark:text-gray-400 text-xs truncate max-w-[90px]">{p.dataKey}</span>
+                <span className="text-gray-600 dark:text-gray-400 text-xs truncate max-w-[100px]">
+                  {getCategoryEmoji(p.dataKey)} {p.dataKey}
+                </span>
               </div>
               <span className="font-money text-xs text-gray-900 dark:text-gray-100">{fmtK(p.value)}</span>
             </div>

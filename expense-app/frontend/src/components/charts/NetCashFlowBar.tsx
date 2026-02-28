@@ -18,20 +18,35 @@ function toLabel(month: string) {
   try { return format(parseISO(`${month}-01`), 'MMM yy') } catch { return month }
 }
 
+/** Generate symmetric nice ticks that always include 0 */
+function makeTicks(absMax: number): number[] {
+  if (absMax === 0) return [-1, 0, 1]
+  const raw = absMax / 2
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)))
+  const step = ([1, 2, 2.5, 5, 10].find(m => m * mag >= raw) ?? 10) * mag
+  const ticks: number[] = []
+  for (let v = -step * 3; v <= step * 3; v += step) {
+    if (v >= -absMax * 1.3 && v <= absMax * 1.3) ticks.push(Math.round(v))
+  }
+  if (!ticks.includes(0)) ticks.push(0)
+  return ticks.sort((a, b) => a - b)
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   const net = payload.find((p: any) => p.dataKey === 'net')?.value ?? 0
   const prev = payload.find((p: any) => p.dataKey === 'compareNet')?.value
+  const fmt = (v: number) => (Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
   return (
     <div className="bg-surface dark:bg-gray-800 rounded-lg shadow-soft border border-border-light dark:border-border-dark p-3 text-sm">
       <div className="text-gray-500 dark:text-gray-400 text-xs mb-1.5">{label}</div>
       <div className={`font-money font-semibold ${net >= 0 ? 'text-status-positive' : 'text-status-negative'}`}>
-        {net >= 0 ? '+' : ''}{net >= 1000 || net <= -1000 ? `$${(net / 1000).toFixed(1)}k` : `$${net}`}
+        {net >= 0 ? '+' : ''}{fmt(net)}
       </div>
       {prev !== undefined && (
         <div className="text-xs text-gray-400 mt-0.5 font-money">
-          prev: {prev >= 0 ? '+' : ''}{Math.abs(prev) >= 1000 ? `$${(prev / 1000).toFixed(1)}k` : `$${prev}`}
+          prev: {prev >= 0 ? '+' : ''}{fmt(prev)}
         </div>
       )}
     </div>
@@ -55,19 +70,29 @@ export function NetCashFlowBar({ data, compareData }: NetCashFlowBarProps) {
     }
   })
 
-  const absMax = Math.max(...chartData.flatMap(d => [Math.abs(d.net), Math.abs(d.compareNet ?? 0)]))
-  const yDomain: [number, number] = [-absMax * 1.15, absMax * 1.15]
+  const absMax = Math.max(
+    1,
+    ...chartData.flatMap(d => [Math.abs(d.net), Math.abs((d as any).compareNet ?? 0)])
+  )
+  const ticks = makeTicks(absMax)
+  const yDomain: [number, number] = [ticks[0], ticks[ticks.length - 1]]
 
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <ComposedChart data={chartData} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} barCategoryGap="35%">
+      <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="35%">
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="rgba(0,0,0,0.06)"
           className="dark:stroke-white/[0.06]"
           vertical={false}
         />
-        <ReferenceLine y={0} stroke="rgba(0,0,0,0.15)" className="dark:stroke-white/20" />
+        {/* Zero reference line — solid and clearly visible */}
+        <ReferenceLine
+          y={0}
+          stroke="rgba(0,0,0,0.25)"
+          strokeWidth={1.5}
+          className="dark:stroke-white/30"
+        />
         <XAxis
           dataKey="month"
           tick={{ fontSize: 11, fill: 'currentColor' }}
@@ -77,12 +102,16 @@ export function NetCashFlowBar({ data, compareData }: NetCashFlowBarProps) {
         />
         <YAxis
           domain={yDomain}
+          ticks={ticks}
           tick={{ fontSize: 11, fill: 'currentColor' }}
           className="text-gray-500 dark:text-gray-400"
           axisLine={false}
           tickLine={false}
-          width={48}
-          tickFormatter={v => `$${Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`}
+          width={58}
+          tickFormatter={v => {
+            if (v === 0) return '$0'
+            return `${v < 0 ? '-' : ''}$${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toFixed(0) + 'k' : Math.abs(v)}`
+          }}
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
         <Bar dataKey="net" radius={[3, 3, 3, 3]}>
