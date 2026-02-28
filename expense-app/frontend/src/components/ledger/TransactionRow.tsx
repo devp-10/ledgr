@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import { format, parseISO } from 'date-fns'
 import { Pencil, Trash2, TrendingUp, TrendingDown, ArrowRightLeft, Check, X } from 'lucide-react'
 import { CategoryDropdown } from './CategoryDropdown'
+import { TypeDropdown } from './TypeDropdown'
 
 interface TransactionRowProps {
   transaction: Transaction
@@ -164,15 +165,7 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
 
         {/* Type */}
         <div className="w-[84px] flex-shrink-0">
-          <select
-            value={editType}
-            onChange={e => setEditType(e.target.value as TransactionType)}
-            className={clsx(inputCls, 'text-xs capitalize')}
-          >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
-            <option value="transfer">Transfer</option>
-          </select>
+          <TypeDropdown value={editType} onChange={setEditType} />
         </div>
 
         {/* Amount */}
