@@ -17,7 +17,6 @@ from models import (
     SplitRequest,
     PaginatedTransactions,
     Transaction,
-    VALID_CATEGORIES,
     TRANSACTION_TYPES,
 )
 from services.parser import parse_file
@@ -495,21 +494,8 @@ def split_transaction(transaction_id: int, req: SplitRequest):
 @router.get("/categories")
 def list_categories():
     with get_connection() as conn:
-        custom = [r["name"] for r in conn.execute("SELECT name FROM categories ORDER BY name").fetchall()]
-    return {"categories": VALID_CATEGORIES + custom, "custom": custom}
-
-
-@router.post("/categories")
-def add_category(data: dict):
-    name = str(data.get("name", "")).strip()
-    if not name:
-        raise HTTPException(status_code=400, detail="Category name required")
-    with get_connection() as conn:
-        try:
-            conn.execute("INSERT INTO categories (name) VALUES (?)", (name,))
-        except Exception:
-            raise HTTPException(status_code=409, detail="Category already exists")
-    return {"name": name}
+        names = [r["name"] for r in conn.execute("SELECT name FROM budget_categories ORDER BY name").fetchall()]
+    return {"categories": names}
 
 
 @router.post("/export")
@@ -540,5 +526,4 @@ def export_csv():
 def clear_all_data():
     with get_connection() as conn:
         conn.execute("DELETE FROM transactions")
-        conn.execute("DELETE FROM categories")
     return {"message": "All data cleared"}

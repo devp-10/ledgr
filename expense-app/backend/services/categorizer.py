@@ -4,11 +4,16 @@ import re
 from typing import List, Optional, Callable, Awaitable
 
 import config
-from models import VALID_CATEGORIES
 
 
-def build_prompt(descriptions: List[str]) -> str:
-    categories_str = ", ".join(VALID_CATEGORIES)
+def _load_budget_category_names() -> List[str]:
+    from services.database import get_connection
+    with get_connection() as conn:
+        return [r["name"] for r in conn.execute("SELECT name FROM budget_categories ORDER BY name").fetchall()]
+
+
+def build_prompt(descriptions: List[str], categories: List[str]) -> str:
+    categories_str = ", ".join(categories)
     numbered = "\n".join(f"{i + 1}. {d}" for i, d in enumerate(descriptions))
     return f"""You are a financial transaction categorizer. Categorize each transaction into exactly one of these categories:
 {categories_str}
@@ -16,10 +21,10 @@ def build_prompt(descriptions: List[str]) -> str:
 Rules:
 - Positive amounts or descriptions containing "salary", "payroll", "direct deposit" → Income
 - Negative amounts are expenses
-- Use "Other" if uncertain
+- If uncertain, pick the closest matching category from the list above
 
 Respond with ONLY a JSON array of strings, one category per transaction, in the same order.
-Example for 3 transactions: ["Groceries", "Dining & Restaurants", "Transportation"]
+Example for 3 transactions: ["{categories[0] if categories else 'Other'}", "{categories[1] if len(categories) > 1 else 'Other'}", "{categories[2] if len(categories) > 2 else 'Other'}"]
 
 Transactions to categorize:
 {numbered}
@@ -61,8 +66,10 @@ async def categorize_batch(
     client: httpx.AsyncClient,
     url: str,
     model: str,
+    valid_categories: List[str],
 ) -> List[str]:
-    prompt = build_prompt(descriptions)
+    fallback = valid_categories[0] if valid_categories else "Other"
+    prompt = build_prompt(descriptions, valid_categories)
     response = await client.post(
         f"{url}/api/generate",
         json={"model": model, "prompt": prompt, "stream": False},
@@ -72,13 +79,13 @@ async def categorize_batch(
     raw = response.json()["response"].strip()
     match = re.search(r"\[.*?\]", raw, re.DOTALL)
     if not match:
-        return ["Other"] * len(descriptions)
-    categories = json.loads(match.group())
+        return [fallback] * len(descriptions)
+    result = json.loads(match.group())
     validated = []
-    for cat in categories:
-        validated.append(cat if cat in VALID_CATEGORIES else "Other")
+    for cat in result:
+        validated.append(cat if cat in valid_categories else fallback)
     while len(validated) < len(descriptions):
-        validated.append("Other")
+        validated.append(fallback)
     return validated[: len(descriptions)]
 
 
@@ -125,13 +132,16 @@ async def categorize_transactions(
     if progress_callback and completed > 0:
         await progress_callback(completed, total)
 
+    # Load budget category names for AI prompt and validation
+    valid_categories = _load_budget_category_names()
+
     # AI categorization for remaining transactions
     async with httpx.AsyncClient() as client:
         for i in range(0, len(ai_ids), config.BATCH_SIZE):
             batch_ids = ai_ids[i : i + config.BATCH_SIZE]
             batch_descs = ai_descs[i : i + config.BATCH_SIZE]
 
-            categories = await categorize_batch(batch_descs, client, url, model)
+            categories = await categorize_batch(batch_descs, client, url, model, valid_categories)
 
             from services.database import get_connection
             with get_connection() as conn:

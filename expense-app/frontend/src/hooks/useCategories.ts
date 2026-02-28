@@ -8,8 +8,7 @@ export function useCategories() {
   const load = useCallback(async () => {
     try {
       const data = await api.getCategories()
-      const all = [...(data.categories || []), ...(data.custom || [])]
-      setCategories([...new Set(all)])
+      setCategories(data.categories || [])
     } catch {
       // silently fail
     } finally {
@@ -19,10 +18,5 @@ export function useCategories() {
 
   useEffect(() => { load() }, [load])
 
-  const addCategory = useCallback(async (name: string) => {
-    await api.addCategory(name)
-    await load()
-  }, [load])
-
-  return { categories, loading, refetch: load, addCategory }
+  return { categories, loading, refetch: load }
 }
