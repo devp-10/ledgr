@@ -26,7 +26,14 @@ export function CategoryDropdown({ value, categories, onChange, className }: Cat
   const updatePosition = () => {
     if (triggerRef.current) {
       const r = triggerRef.current.getBoundingClientRect()
-      setPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+      const spaceBelow = window.innerHeight - r.bottom - 8
+      const spaceAbove = r.top - 8
+      const openUpward = spaceBelow < 200 && spaceAbove > spaceBelow
+      if (openUpward) {
+        setPanelStyle({ position: 'fixed', bottom: window.innerHeight - r.top + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+      } else {
+        setPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+      }
     }
   }
 
