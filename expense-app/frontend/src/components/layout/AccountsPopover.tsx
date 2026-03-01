@@ -67,15 +67,15 @@ export function AccountsPopover() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
+        aria-label="Accounts"
         className={clsx(
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
+          'p-2 rounded-md transition-colors',
           open
             ? 'text-accent-600 dark:text-accent-400 bg-accent-500/10'
             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5'
         )}
       >
-        <CreditCard size={15} />
-        Accounts
+        <CreditCard size={18} />
       </button>
 
       {open && (
