@@ -260,7 +260,13 @@ export function TransactionRow({ transaction: t, categories, accounts, selected,
                 if (editingCat) { setEditingCat(false); setCatSearch(''); return }
                 if (catBadgeRef.current) {
                   const r = catBadgeRef.current.getBoundingClientRect()
-                  setCatPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+                  const spaceBelow = window.innerHeight - r.bottom - 8
+                  const spaceAbove = r.top - 8
+                  if (spaceBelow < 260 && spaceAbove > spaceBelow) {
+                    setCatPanelStyle({ position: 'fixed', bottom: window.innerHeight - r.top + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+                  } else {
+                    setCatPanelStyle({ position: 'fixed', top: r.bottom + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
+                  }
                 }
                 setEditingCat(true)
               }}

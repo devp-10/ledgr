@@ -28,7 +28,7 @@ export function CategoryDropdown({ value, categories, onChange, className }: Cat
       const r = triggerRef.current.getBoundingClientRect()
       const spaceBelow = window.innerHeight - r.bottom - 8
       const spaceAbove = r.top - 8
-      const openUpward = spaceBelow < 200 && spaceAbove > spaceBelow
+      const openUpward = spaceBelow < 260 && spaceAbove > spaceBelow
       if (openUpward) {
         setPanelStyle({ position: 'fixed', bottom: window.innerHeight - r.top + 4, left: r.left, minWidth: r.width, zIndex: 9999 })
       } else {
