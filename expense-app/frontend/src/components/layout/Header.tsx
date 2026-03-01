@@ -13,12 +13,12 @@ function LedgrLogo() {
   return (
     <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect width="64" height="64" rx="14" fill="#C15F3C" />
-      {/* L stem + foot */}
-      <path d="M18 14 L18 50 L46 50" stroke="white" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Ledger rule lines */}
-      <line x1="18" y1="24" x2="34" y2="24" stroke="white" strokeWidth="1.8" strokeLinecap="round" opacity="0.45" />
-      <line x1="18" y1="32" x2="34" y2="32" stroke="white" strokeWidth="1.8" strokeLinecap="round" opacity="0.45" />
-      <line x1="18" y1="40" x2="34" y2="40" stroke="white" strokeWidth="1.8" strokeLinecap="round" opacity="0.45" />
+      {/* Bar 1 — tallest, left (L stem) */}
+      <rect x="13" y="13" width="11" height="37" rx="2.5" fill="white" />
+      {/* Bar 2 — same height as bar 3 (L foot) */}
+      <rect x="27" y="38" width="11" height="12" rx="2.5" fill="white" opacity="0.75" />
+      {/* Bar 3 — short, right (L foot) */}
+      <rect x="41" y="38" width="11" height="12" rx="2.5" fill="white" opacity="0.5" />
     </svg>
   )
 }
