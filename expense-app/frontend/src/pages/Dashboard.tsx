@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api, DashboardSummary, Transaction } from '../lib/api'
-import { SpendingDonut } from '../components/charts/SpendingDonut'
+import { CategoryDonut } from '../components/charts/CategoryDonut'
 import { MonthlyTrendLine } from '../components/charts/MonthlyTrendLine'
 import { CategoryBadge } from '../components/CategoryBadge'
 
@@ -164,7 +164,7 @@ export function Dashboard() {
           <div className="grid grid-cols-5 gap-6">
             <div className="col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
               <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Spending by Category</h2>
-              <SpendingDonut data={data.spending_by_category} />
+              <CategoryDonut data={data.spending_by_category} total={data.total_spending} />
             </div>
             <div className="col-span-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
               <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Monthly Trend (Last 6 Months)</h2>

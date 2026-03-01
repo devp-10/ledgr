@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts'
 import { useState } from 'react'
-import { SpendingCategory } from '../../types'
+import { SpendingCategory } from '../../lib/api'
 import { getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 
 interface CategoryDonutProps {
