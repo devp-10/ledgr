@@ -72,10 +72,26 @@ def _to_float(val) -> float:
         return 0.0
 
 
+def _read_csv_robust(content: bytes) -> pd.DataFrame:
+    """Try reading CSV with several encodings and header-skip strategies."""
+    encodings = ["utf-8-sig", "utf-8", "latin1", "cp1252"]
+    last_err: Exception = ValueError("Could not read CSV file")
+    for enc in encodings:
+        for skip in range(6):
+            try:
+                df = pd.read_csv(BytesIO(content), encoding=enc, skiprows=skip)
+                # Require at least 2 columns with at least 1 data row
+                if df.shape[1] >= 2 and df.shape[0] >= 1:
+                    return df
+            except Exception as e:
+                last_err = e
+    raise ValueError(f"Could not read CSV file: {last_err}")
+
+
 def parse_file(content: bytes, filename: str) -> Tuple[List[ParsedTransaction], dict]:
     fn = filename.lower()
     if fn.endswith(".csv"):
-        df = pd.read_csv(BytesIO(content))
+        df = _read_csv_robust(content)
     elif fn.endswith((".xlsx", ".xls")):
         df = pd.read_excel(BytesIO(content), engine="openpyxl")
     else:

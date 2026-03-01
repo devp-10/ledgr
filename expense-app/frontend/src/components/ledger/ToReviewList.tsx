@@ -7,7 +7,7 @@ import { clsx } from 'clsx'
 import { format, parseISO } from 'date-fns'
 import { CategoryDropdown } from './CategoryDropdown'
 import { TypeDropdown } from './TypeDropdown'
-import { getCategoryColor, getCategoryDotColor } from '../ui/Badge'
+import { getCategoryColor, getCategoryDotColor, getCategoryEmoji } from '../ui/Badge'
 
 interface ToReviewListProps {
   transactions: Transaction[]
@@ -317,7 +317,7 @@ function ReviewRow({
                 saving && 'opacity-50',
               )}
             >
-              {saving ? '…' : (t.category ?? 'Uncategorized')}
+              {saving ? '…' : (t.category ? `${getCategoryEmoji(t.category)} ${t.category}` : 'Uncategorized')}
             </button>
             {editingCat && createPortal(
               <div
@@ -342,7 +342,7 @@ function ReviewRow({
                       className="w-full text-left text-xs px-3 py-1.5 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
                     >
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: getCategoryDotColor(cat) }} />
-                      {cat}
+                      {getCategoryEmoji(cat)} {cat}
                     </button>
                   ))}
                   {filteredCats.length === 0 && <p className="text-xs text-gray-400 px-3 py-2">No matches</p>}

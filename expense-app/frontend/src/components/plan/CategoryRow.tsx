@@ -74,10 +74,10 @@ export function CategoryRow({ category, spent, onEditBudget, onOpenModal }: Cate
               setEditVal(String(category.budget_amount))
               setEditing(true)
             }}
-            className="flex items-center gap-1 text-sm font-money text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 group/edit transition-colors ml-auto"
+            className="relative text-sm font-money text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 group/edit transition-colors ml-auto"
           >
             {formatMoney(category.budget_amount)}
-            <Pencil size={10} className="opacity-0 group-hover/edit:opacity-60 transition-opacity" />
+            <Pencil size={10} className="absolute top-1/2 -translate-y-1/2 left-full ml-1 opacity-0 group-hover/edit:opacity-60 transition-opacity" />
           </button>
         )}
       </div>
