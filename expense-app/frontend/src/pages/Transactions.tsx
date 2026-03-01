@@ -30,7 +30,7 @@ export function Transactions() {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    api.getCategories().then(r => setCategories(r.categories))
+    api.getCategories().then(r => setCategories(r.categories.map(c => c.name)))
   }, [])
 
   useEffect(() => {

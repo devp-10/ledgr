@@ -58,28 +58,6 @@ class UpdateCategoryRequest(BaseModel):
 
 # ─── Transaction / Category Models ───────────────────────────────────────────
 
-VALID_CATEGORIES = [
-    "Groceries",
-    "Dining & Restaurants",
-    "Transportation",
-    "Utilities",
-    "Entertainment",
-    "Shopping",
-    "Healthcare",
-    "Subscriptions",
-    "Travel",
-    "Housing",
-    "Insurance",
-    "Personal Care",
-    "Education",
-    "Gifts & Donations",
-    "Income",
-    "Transfer",
-    "Fees & Charges",
-    "Other",
-]
-
-
 TRANSACTION_TYPES = ["expense", "income", "transfer"]
 
 

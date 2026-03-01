@@ -31,12 +31,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE IF NOT EXISTS budget_groups (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -121,6 +115,28 @@ def init_db():
         acct_cols = [r["name"] for r in conn.execute("PRAGMA table_info(accounts)").fetchall()]
         if "account_type" not in acct_cols:
             conn.execute("ALTER TABLE accounts ADD COLUMN account_type TEXT NOT NULL DEFAULT 'bank_account'")
+        # Remap legacy category names to current budget_categories names.
+        # Only applies when the target name exists in budget_categories, so
+        # custom setups are unaffected.
+        _LEGACY_CATEGORY_MAP = {
+            'Dining & Restaurants': 'Eating Out',
+            'Housing':              'Rent',
+            'Personal Care':        'Personal',
+            'Travel':               'Flights',
+            'Gifts & Donations':    'General Household',
+            'Insurance':            'Personal',
+            'Healthcare':           'Personal',
+            'Fees & Charges':       'General Household',
+            'Transportation':       'Car Rental',
+        }
+        valid_names = {r["name"] for r in conn.execute("SELECT name FROM budget_categories").fetchall()}
+        for old_name, new_name in _LEGACY_CATEGORY_MAP.items():
+            if new_name in valid_names:
+                conn.execute(
+                    "UPDATE transactions SET category = ? WHERE category = ?",
+                    (new_name, old_name),
+                )
+
         # Seed budget defaults if tables are empty
         count = conn.execute("SELECT COUNT(*) FROM budget_groups").fetchone()[0]
         if count == 0:

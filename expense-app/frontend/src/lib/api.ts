@@ -84,13 +84,7 @@ export const api = {
     }),
 
   getCategories: () =>
-    request<{ categories: string[]; custom: string[] }>('/categories'),
-
-  addCategory: (name: string) =>
-    request<{ name: string }>('/categories', {
-      method: 'POST',
-      body: JSON.stringify({ name }),
-    }),
+    request<{ categories: { name: string; emoji: string }[] }>('/categories'),
 
   getDashboard: (month?: string) =>
     request<DashboardSummary>(`/dashboard${month ? `?month=${month}` : ''}`),
