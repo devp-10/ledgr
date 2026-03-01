@@ -170,11 +170,7 @@ The LLM is configured via environment variables (see [Changing the LLM model](#c
 
 ## API Docs
 
-Start the app, then temporarily expose the backend port to browse the interactive Swagger UI:
-
-1. In `docker-compose.yml`, add `ports: ["8000:8000"]` under the `backend` service.
-2. Restart: `docker compose up`
-3. Open http://localhost:8000/docs
+Start the app, then open http://localhost:8000/docs for the interactive Swagger UI.
 
 ---
 

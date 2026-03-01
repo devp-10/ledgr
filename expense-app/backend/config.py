@@ -22,5 +22,3 @@ MONTHLY_TREND_MONTHS = 6
 RECENT_TRANSACTIONS_LIMIT = 10
 TOP_EXPENSES_LIMIT = 10
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
-CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(",")
