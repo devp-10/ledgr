@@ -18,9 +18,3 @@ export type {
 // Types that only belong in the UI layer
 export type LedgerView = 'all' | 'review'
 
-export type QuickFilter =
-  | 'this-month'
-  | 'last-month'
-  | 'this-year'
-  | 'last-year'
-  | 'all-time'
