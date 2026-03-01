@@ -115,6 +115,7 @@ function ReviewRow({
     setSaving(true)
     setEditingCat(false)
     setCatSearch('')
+    setCat(cat)
     try { await onReview(t.id, { category: cat }) }
     finally { setSaving(false) }
   }

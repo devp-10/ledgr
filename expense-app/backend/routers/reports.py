@@ -33,12 +33,12 @@ def get_monthly_report(month: str = Path(...)):
 
     with get_connection() as conn:
         curr_rows = conn.execute(
-            "SELECT amount, category FROM transactions WHERE date >= ? AND date < ?",
+            "SELECT amount, category, transaction_type FROM transactions WHERE date >= ? AND date < ?",
             (month_start, month_end),
         ).fetchall()
 
         prev_rows = conn.execute(
-            "SELECT amount, category FROM transactions WHERE date >= ? AND date < ?",
+            "SELECT amount, category, transaction_type FROM transactions WHERE date >= ? AND date < ?",
             (prev_start, prev_end),
         ).fetchall()
 
@@ -49,19 +49,19 @@ def get_monthly_report(month: str = Path(...)):
             (month_start, month_end),
         ).fetchall()
 
-    # Aggregate by category (expenses only)
+    # Aggregate by category (expenses only, excluding transfers)
     curr_by_cat: dict = defaultdict(float)
     for r in curr_rows:
-        if r["amount"] < 0:
+        if r["amount"] < 0 and r["transaction_type"] != "transfer":
             curr_by_cat[r["category"] or "Uncategorized"] += abs(r["amount"])
 
     prev_by_cat: dict = defaultdict(float)
     for r in prev_rows:
-        if r["amount"] < 0:
+        if r["amount"] < 0 and r["transaction_type"] != "transfer":
             prev_by_cat[r["category"] or "Uncategorized"] += abs(r["amount"])
 
     total_spending = sum(curr_by_cat.values())
-    total_income = sum(r["amount"] for r in curr_rows if r["amount"] > 0)
+    total_income = sum(r["amount"] for r in curr_rows if r["transaction_type"] == "income" and r["amount"] > 0)
     total_for_pct = total_spending or 1.0
 
     breakdown = []
