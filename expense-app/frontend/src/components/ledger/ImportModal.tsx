@@ -80,8 +80,8 @@ export function ImportModal({ open, onClose, onComplete }: ImportModalProps) {
         const result = await api.upload(files[0])
         setPreview(result)
         setStep('preview')
-      } catch {
-        addToast('Failed to parse file. Check the format and try again.', 'error')
+      } catch (err) {
+        addToast(err instanceof Error ? err.message : 'Failed to parse file. Check the format and try again.', 'error')
       } finally {
         setUploading(false)
       }

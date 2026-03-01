@@ -75,13 +75,16 @@ def _to_float(val) -> float:
 def _read_csv_robust(content: bytes) -> pd.DataFrame:
     """Try reading CSV with several encodings and header-skip strategies."""
     encodings = ["utf-8-sig", "utf-8", "latin1", "cp1252"]
+    date_aliases = set(COLUMN_ALIASES["date"])
     last_err: Exception = ValueError("Could not read CSV file")
     for enc in encodings:
         for skip in range(6):
             try:
                 df = pd.read_csv(BytesIO(content), encoding=enc, skiprows=skip)
-                # Require at least 2 columns with at least 1 data row
-                if df.shape[1] >= 2 and df.shape[0] >= 1:
+                cols_lower = {c.lower().strip() for c in df.columns}
+                # Require >= 2 columns, >= 1 data row, AND a recognizable date header
+                # so metadata preamble rows aren't mistaken for the real header
+                if df.shape[1] >= 2 and df.shape[0] >= 1 and cols_lower & date_aliases:
                     return df
             except Exception as e:
                 last_err = e
