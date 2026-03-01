@@ -1,18 +1,13 @@
 import { HTMLAttributes, forwardRef } from 'react'
 import { clsx } from 'clsx'
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  hover?: boolean
-}
-
-export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ hover, className, children, ...props }, ref) => {
+export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={clsx(
           'rounded-lg bg-surface dark:bg-[#171717] border border-border-light dark:border-border-dark shadow-card',
-          hover && 'transition-shadow hover:shadow-soft',
           className
         )}
         {...props}
