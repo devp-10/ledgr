@@ -29,7 +29,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   const item = payload[0]
   return (
     <div className="bg-surface dark:bg-gray-800 rounded-lg shadow-soft border border-border-light dark:border-border-dark p-3 text-sm">
-      <div className="text-gray-600 dark:text-gray-400 mb-1">{item.name}</div>
+      <div className="text-gray-600 dark:text-gray-400 mb-1">{getCategoryEmoji(item.name)} {item.name}</div>
       <div className="font-money text-gray-900 dark:text-gray-100 font-semibold">{formatMoney(item.value)}</div>
     </div>
   )

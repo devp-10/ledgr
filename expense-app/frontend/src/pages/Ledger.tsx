@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Upload, Plus } from 'lucide-react'
 import { useTransactions } from '../hooks/useTransactions'
-import { useCategories } from '../hooks/useCategories'
+import { useToastContext, useCategoriesContext } from '../App'
 import { SearchBar } from '../components/ledger/SearchBar'
 import { AdvancedFilters } from '../components/ledger/AdvancedFilters'
 import { TransactionList } from '../components/ledger/TransactionList'
@@ -12,7 +12,6 @@ import { AddTransactionModal } from '../components/ledger/AddTransactionModal'
 import { Button } from '../components/ui/Button'
 import { LedgerView, Account, TransactionUpdate } from '../types'
 import { api } from '../lib/api'
-import { useToastContext } from '../App'
 import { clsx } from 'clsx'
 
 export function Ledger() {
@@ -26,7 +25,7 @@ export function Ledger() {
   const [addOpen, setAddOpen] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
 
-  const { categories } = useCategories()
+  const { categories } = useCategoriesContext()
 
   // All Transactions hook — no date restriction, paginated
   const allTx = useTransactions({
