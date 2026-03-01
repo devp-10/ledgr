@@ -183,7 +183,21 @@ export function Reflect() {
     }
   }, [prevStats])
 
-  const categoryData = mainData?.spending_by_category ?? []
+  // Aggregate spending by category across the full period (same source as SpendingCategoryBar)
+  const categoryData = useMemo(() => {
+    const totals = new Map<string, number>()
+    periodMonthlyData.forEach(d =>
+      d.spending_by_category.forEach(c => {
+        totals.set(c.category, (totals.get(c.category) ?? 0) + c.amount)
+      })
+    )
+    const total = [...totals.values()].reduce((s, v) => s + v, 0) || 1
+    return [...totals.entries()].map(([category, amount]) => ({
+      category,
+      amount,
+      percentage: Math.round((amount / total) * 1000) / 10,
+    }))
+  }, [periodMonthlyData])
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -287,7 +301,7 @@ export function Reflect() {
             ) : (
               <CategoryDonut
                 data={categoryData}
-                total={currentStats.totalSpending}
+                total={categoryData.reduce((s, c) => s + c.amount, 0)}
               />
             )}
           </CardContent>
