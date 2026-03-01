@@ -39,13 +39,12 @@ def get_dashboard(month: str = Query(None)):
     with get_connection() as conn:
         # Current month transactions
         rows = conn.execute(
-            "SELECT amount FROM transactions WHERE date >= ? AND date < ?",
+            "SELECT amount, transaction_type FROM transactions WHERE date >= ? AND date < ?",
             (month_start, month_end),
         ).fetchall()
 
-        amounts = [r["amount"] for r in rows]
-        total_spending_neg = sum(a for a in amounts if a < 0)
-        total_income = sum(a for a in amounts if a > 0)
+        total_spending_neg = sum(r["amount"] for r in rows if r["amount"] < 0 and r["transaction_type"] != "transfer")
+        total_income = sum(r["amount"] for r in rows if r["transaction_type"] == "income" and r["amount"] > 0)
         net_cash_flow = total_income + total_spending_neg
 
         # Spending by category (expenses only)
@@ -78,14 +77,13 @@ def get_dashboard(month: str = Query(None)):
             ms, me = _month_bounds(t_year, t_mon)
 
             t_rows = conn.execute(
-                "SELECT amount FROM transactions WHERE date >= ? AND date < ?",
+                "SELECT amount, transaction_type FROM transactions WHERE date >= ? AND date < ?",
                 (ms, me),
             ).fetchall()
-            t_amounts = [r["amount"] for r in t_rows]
             trend.append({
                 "month": ms[:7],
-                "spending": round(abs(sum(a for a in t_amounts if a < 0)), 2),
-                "income": round(sum(a for a in t_amounts if a > 0), 2),
+                "spending": round(abs(sum(r["amount"] for r in t_rows if r["amount"] < 0 and r["transaction_type"] != "transfer")), 2),
+                "income": round(sum(r["amount"] for r in t_rows if r["transaction_type"] == "income" and r["amount"] > 0), 2),
             })
 
         # Recent transactions (across all time)

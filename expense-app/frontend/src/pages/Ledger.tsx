@@ -92,13 +92,16 @@ export function Ledger() {
   }, [active, addToast])
 
   const handleReview = useCallback(async (id: number, update: Partial<TransactionUpdate>) => {
+    const isReviewAction = update.reviewed === true
     try {
-      await reviewTx.patchTransaction(id, { ...update, reviewed: true })
-      reviewTx.removeTransaction(id)
-      await allTx.refetch()
-      addToast('Transaction marked as reviewed', 'success')
+      await reviewTx.patchTransaction(id, update)
+      if (isReviewAction) {
+        reviewTx.removeTransaction(id)
+        await allTx.refetch()
+        addToast('Transaction marked as reviewed', 'success')
+      }
     } catch {
-      addToast('Failed to review transaction', 'error')
+      addToast('Failed to update transaction', 'error')
     }
   }, [reviewTx, allTx, addToast])
 
