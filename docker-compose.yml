@@ -26,6 +26,8 @@ services:
   # ── FastAPI backend ───────────────────────────────────────────────────────
   backend:
     build: ./expense-app/backend
+    ports:
+      - "8000:8000"                # API docs at http://localhost:8000/docs
     environment:
       - OLLAMA_URL=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-mistral}
