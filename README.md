@@ -1,5 +1,7 @@
 # Ledgr — Personal Expense Tracker
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/YOUR_DOCKERHUB_USERNAME/ledgr-backend?label=Docker%20pulls)](https://hub.docker.com/r/YOUR_DOCKERHUB_USERNAME/ledgr-backend)
+
 A single-user expense tracking web app that runs entirely on your machine. Import bank statements, let a local LLM (Ollama) categorize your transactions, and analyze your spending across three views: **Plan**, **Reflect**, and **Ledger**.
 
 ## Tech Stack
@@ -11,20 +13,34 @@ A single-user expense tracking web app that runs entirely on your machine. Impor
 
 ---
 
-## Quick Start
+## Install
 
 The only requirement is [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
+**1. Download the latest release**
+
+Go to the [Releases page](../../releases/latest) and download `docker-compose.yml`. Place it in an empty folder on your machine.
+
+Or grab it with curl:
+
 ```bash
-git clone <repo-url>
-cd ledgr
-docker compose up --build
+curl -L https://github.com/YOUR_GITHUB_USERNAME/ledgr/releases/latest/download/docker-compose.yml -o docker-compose.yml
+```
+
+**2. Start the app**
+
+```bash
+docker compose up
 ```
 
 Then open **http://localhost:3000**.
 
-> **First run** downloads the `mistral` model (~4 GB) and builds the Docker images. This takes a few minutes depending on your connection.
-> Subsequent `docker compose up` starts in seconds — the model is cached in a Docker volume.
+> **First run** downloads the `mistral` model (~4 GB). This takes a few minutes depending on your connection.
+> Subsequent starts are instant — the model is cached in a Docker volume.
+
+**3. Your data**
+
+All your transactions are stored in `./data/expenses.db` in that folder — on your machine, never uploaded anywhere.
 
 ### Stop the app
 
@@ -32,10 +48,22 @@ Then open **http://localhost:3000**.
 docker compose down
 ```
 
-### Wipe the downloaded model weights (database is unaffected)
+### Wipe the downloaded model weights (your data is unaffected)
 
 ```bash
 docker compose down -v
+```
+
+---
+
+## For developers — run from source
+
+Clone the repo and build the images locally:
+
+```bash
+git clone <repo-url>
+cd ledgr
+docker compose up --build
 ```
 
 ---
