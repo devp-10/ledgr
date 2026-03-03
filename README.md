@@ -4,8 +4,8 @@
 
 Ledgr is a self-hosted personal finance app. Import your bank statements, let a local AI categorize your transactions, and get a clear picture of where your money is going — all running on your own machine.
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/YOUR_DOCKERHUB_USERNAME/ledgr-backend?label=Docker%20pulls&logo=docker)](https://hub.docker.com/r/YOUR_DOCKERHUB_USERNAME/ledgr-backend)
-[![GitHub Stars](https://img.shields.io/github/stars/YOUR_GITHUB_USERNAME/ledgr?style=flat&logo=github)](https://github.com/YOUR_GITHUB_USERNAME/ledgr)
+[![Docker Pulls](https://img.shields.io/docker/pulls/devp1010/ledgr-backend?label=Docker%20pulls&logo=docker)](https://hub.docker.com/r/devp1010/ledgr-backend)
+[![GitHub Stars](https://img.shields.io/github/stars/devp-10/ledgr?style=flat&logo=github)](https://github.com/devp-10/ledgr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
@@ -33,12 +33,12 @@ Ledgr is a self-hosted personal finance app. Import your bank statements, let a 
 ### Option A — one-liner
 
 ```bash
-curl -L https://github.com/YOUR_GITHUB_USERNAME/ledgr/releases/latest/download/docker-compose.yml -o docker-compose.yml && docker compose up
+curl -L https://github.com/devp-10/ledgr/releases/latest/download/docker-compose.yml -o docker-compose.yml && docker compose up
 ```
 
 ### Option B — manual
 
-1. Go to the [latest release](https://github.com/YOUR_GITHUB_USERNAME/ledgr/releases/latest) and download `docker-compose.yml`
+1. Go to the [latest release](https://github.com/devp-10/ledgr/releases/latest) and download `docker-compose.yml`
 2. Place it in an empty folder
 3. Run:
 
@@ -131,7 +131,7 @@ Transactions are deduplicated by date + description + amount — re-importing th
 Ledgr is built with FastAPI, React, SQLite, and Ollama. To run from source:
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/ledgr.git
+git clone https://github.com/devp-10/ledgr.git
 cd ledgr
 docker compose up --build
 ```
