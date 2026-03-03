@@ -2,6 +2,9 @@
 
 A single-user expense tracking web app that runs entirely on your machine. Import bank statements, let a local LLM (Ollama) categorize your transactions, and analyze your spending across three views: **Plan**, **Reflect**, and **Ledger**.
 
+<!-- Screenshot -->
+<!-- ![Ledgr UI](assets/screenshot.png) -->
+
 ## Tech Stack
 
 - **Backend**: FastAPI + SQLite
@@ -165,6 +168,14 @@ The LLM is configured via environment variables (see [Changing the LLM model](#c
 - The database persists across all Docker operations including `docker compose down -v` (only the volume is wiped, not `./data/`).
 - **Deduplication**: transactions are hashed by `date + description + amount`. Re-uploading the same file is safe — duplicates are skipped automatically.
 - **Export**: in the Ledger, use the export endpoint (`POST /api/export`) to download all transactions as CSV. The API docs at http://localhost:8000/docs list all available endpoints.
+
+---
+
+## macOS App
+
+`macos/Ledgr.app` is an optional macOS app bundle that lets you launch Ledgr from the Dock or Spotlight. It calls `macos/ledgr.sh`, which starts Docker Compose, waits for the frontend, opens Chrome in app-mode (falling back to the default browser), and shuts everything down when the window closes.
+
+To install: drag `macos/Ledgr.app` to your `/Applications` folder.
 
 ---
 

@@ -12,16 +12,25 @@ const TABS = [
 function LedgrLogo() {
   return (
     <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#C15F3C" />
-      {/* Sharp slanted zigzag L — 6 diagonal teeth alternating left/right at 45° */}
-      <path
-        d="M 17,8 L 25,12 L 17,16 L 9,20 L 17,24 L 25,28 L 17,32 L 9,36 L 17,40 L 25,44 L 17,48 L 9,52 L 17,56 L 52,56"
-        stroke="white"
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
+      <defs>
+        <linearGradient id="ledgr-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#D9673A"/>
+          <stop offset="100%" stopColor="#9B2D0F"/>
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="14" fill="url(#ledgr-bg)" />
+      {/* Ascending bars */}
+      <rect x="11" y="42" width="10" height="10" rx="2.5" fill="white" fillOpacity="0.45"/>
+      <rect x="25" y="30" width="10" height="22" rx="2.5" fill="white" fillOpacity="0.7"/>
+      <rect x="39" y="18" width="10" height="34" rx="2.5" fill="white"/>
+      {/* Baseline */}
+      <rect x="9" y="53" width="46" height="3" rx="1.5" fill="white" fillOpacity="0.3"/>
+      {/* Sparkline */}
+      <polyline points="16,42 30,30 44,18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.45"/>
+      {/* Dots at bar tops */}
+      <circle cx="16" cy="42" r="3" fill="white" opacity="0.6"/>
+      <circle cx="30" cy="30" r="3" fill="white" opacity="0.8"/>
+      <circle cx="44" cy="18" r="3.5" fill="white"/>
     </svg>
   )
 }
