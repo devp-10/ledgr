@@ -1,0 +1,12 @@
+<svg width="1024" height="1024" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#C15F3C"/>
+  <!-- Curvy zigzag L — smooth continuous path with 2 vertical and 2 horizontal oscillations -->
+  <path
+    d="M 17,9 C 26,14 26,24 17,30 C 8,36 8,46 17,52 C 26,58 36,58 42,52 C 48,46 52,56 56,52"
+    stroke="white"
+    stroke-width="5.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+</svg>
