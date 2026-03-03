@@ -13,11 +13,11 @@ function LedgrLogo() {
   return (
     <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect width="64" height="64" rx="14" fill="#C15F3C" />
-      {/* Curvy zigzag L — smooth continuous path with 2 vertical and 2 horizontal oscillations */}
+      {/* Sharp slanted zigzag L — 6 diagonal teeth alternating left/right at 45° */}
       <path
-        d="M 17,9 C 26,14 26,24 17,30 C 8,36 8,46 17,52 C 26,58 36,58 42,52 C 48,46 52,56 56,52"
+        d="M 17,8 L 25,12 L 17,16 L 9,20 L 17,24 L 25,28 L 17,32 L 9,36 L 17,40 L 25,44 L 17,48 L 9,52 L 17,56 L 52,56"
         stroke="white"
-        strokeWidth="5.5"
+        strokeWidth="4.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
