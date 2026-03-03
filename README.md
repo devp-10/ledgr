@@ -1,54 +1,30 @@
-# Ledgr
+# Ledgr — Personal Expense Tracker
 
-**Track your spending without sending your data anywhere.**
+A single-user expense tracking web app that runs entirely on your machine. Import bank statements, let a local LLM (Ollama) categorize your transactions, and analyze your spending across three views: **Plan**, **Reflect**, and **Ledger**.
 
-Ledgr is a self-hosted personal finance app. Import your bank statements, let a local AI categorize your transactions, and get a clear picture of where your money is going — all running on your own machine.
+## Tech Stack
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/devp1010/ledgr-backend?label=Docker%20pulls&logo=docker)](https://hub.docker.com/r/devp1010/ledgr-backend)
-[![GitHub Stars](https://img.shields.io/github/stars/devp-10/ledgr?style=flat&logo=github)](https://github.com/devp-10/ledgr)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
----
-
-![Ledgr screenshot](docs/screenshot.png)
-<!-- Add a screenshot at docs/screenshot.png to make this show up -->
+- **Backend**: FastAPI + SQLite
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS + Recharts
+- **AI**: Ollama (local LLM, default model `mistral`)
+- **Container**: Docker Compose — no local Python, Node, or Ollama installation required
 
 ---
 
-## Why Ledgr?
+## Quick Start
 
-- **100% private** — your transactions never leave your machine. No cloud sync, no accounts, no telemetry.
-- **AI categorization that works offline** — uses [Ollama](https://ollama.com) to run a local LLM. No OpenAI key, no API costs.
-- **Import from any bank** — drag and drop a CSV or Excel export from your bank. Duplicates are detected automatically.
-- **Budget tracking** — set monthly budgets per category and see actual vs. planned at a glance.
-- **Spending analytics** — visualize net cash flow, category breakdowns, income, and savings rate over any time period.
-- **One command to run** — the only requirement is Docker.
-
----
-
-## Install
-
-**Requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (free)
-
-### Option A — one-liner
+The only requirement is [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
 ```bash
-curl -L https://github.com/devp-10/ledgr/releases/latest/download/docker-compose.yml -o docker-compose.yml && docker compose up
+git clone <repo-url>
+cd ledgr
+docker compose up --build
 ```
 
-### Option B — manual
+Then open **http://localhost:3000**.
 
-1. Go to the [latest release](https://github.com/devp-10/ledgr/releases/latest) and download `docker-compose.yml`
-2. Place it in an empty folder
-3. Run:
-
-```bash
-docker compose up
-```
-
-Then open **[http://localhost:3000](http://localhost:3000)**.
-
-> **First run:** Ledgr downloads the `mistral` AI model (~4 GB). This takes a few minutes depending on your internet speed. Subsequent starts are instant — the model is cached locally.
+> **First run** downloads the `mistral` model (~4 GB) and builds the Docker images. This takes a few minutes depending on your connection.
+> Subsequent `docker compose up` starts in seconds — the model is cached in a Docker volume.
 
 ### Stop the app
 
@@ -56,102 +32,152 @@ Then open **[http://localhost:3000](http://localhost:3000)**.
 docker compose down
 ```
 
-### Uninstall completely
+### Wipe the downloaded model weights (database is unaffected)
 
 ```bash
-docker compose down -v   # removes cached model weights
-rm docker-compose.yml
-rm -rf data/             # removes your transaction database
+docker compose down -v
 ```
 
 ---
 
-## Getting useful in 10 minutes
+## Changing the LLM model
 
-**1. Add your accounts**
-Click the card icon in the top-right header. Add each bank account or credit card you want to track. The account type matters for how import signs are interpreted.
-
-**2. Set up your budget categories**
-Go to the **Plan** tab. Create groups like "Housing" or "Food", then add categories inside each group (e.g. "Rent", "Groceries"). Optionally assign a monthly budget amount to each.
-
-**3. Import transactions**
-Go to **Ledger → Import**. Drag and drop a CSV exported from your bank, choose the account it belongs to, and confirm. The AI will categorize everything in the background.
-
-**4. Review**
-The **To Review** tab shows newly imported transactions. Confirm or correct each one's category, then mark it as reviewed.
-
-**5. Explore**
-- **Plan** — budget vs. actual spending this month
-- **Reflect** — charts for any time period: cash flow, spending breakdown, savings rate
-- **Ledger** — full searchable and filterable transaction list
-
----
-
-## Change the AI model
-
-The default model is `mistral` (~4 GB, good balance of speed and accuracy). To use a different one:
+The default model is `mistral`. To use a different Ollama model, set `OLLAMA_MODEL` before starting:
 
 ```bash
-# in the same folder as your docker-compose.yml
+# one-time in your shell
+OLLAMA_MODEL=llama3.2 docker compose up --build
+
+# or create a .env file at the repo root (Docker Compose picks it up automatically)
 echo "OLLAMA_MODEL=llama3.2" > .env
-docker compose up
-```
-
-Any model available on [ollama.com/library](https://ollama.com/library) will work. It is downloaded automatically on the next start.
-
----
-
-## Configuration
-
-| Variable | Default | Description |
-|---|---|---|
-| `OLLAMA_MODEL` | `mistral` | Which Ollama model to use for AI categorization |
-| `OLLAMA_URL` | `http://ollama:11434` | Ollama service URL (set automatically by Docker Compose) |
-| `DB_PATH` | `/data/expenses.db` | Path to the SQLite database inside the container |
-
-Copy `.env.example` to `.env` and uncomment any lines you want to change.
-
----
-
-## Your data
-
-| What | Where |
-|---|---|
-| Transaction database | `./data/expenses.db` next to your `docker-compose.yml` |
-| AI model weights | Docker volume (managed by Docker, not a folder on disk) |
-
-The database survives all Docker operations including `docker compose down -v`. Only `rm -rf data/` deletes it.
-
-Transactions are deduplicated by date + description + amount — re-importing the same file is safe.
-
----
-
-## Contributing
-
-Ledgr is built with FastAPI, React, SQLite, and Ollama. To run from source:
-
-```bash
-git clone https://github.com/devp-10/ledgr.git
-cd ledgr
 docker compose up --build
 ```
 
-The app rebuilds automatically when you change backend or frontend source files.
-
-<details>
-<summary>Tech stack details</summary>
-
-- **Backend:** Python 3.12, FastAPI, SQLite (via raw `sqlite3`), Ollama Python client
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Recharts, shadcn/ui
-- **AI:** Ollama — runs any GGUF-compatible model locally
-- **Infrastructure:** Docker Compose, nginx (frontend), multi-arch images (amd64 + arm64)
-
-</details>
-
-Pull requests are welcome. For larger changes, open an issue first to discuss what you'd like to change.
+The `ollama-init` service pulls the chosen model on first run. The backend reads the same variable and uses it for all categorization requests.
 
 ---
 
-## License
+## Getting Started (first-time workflow)
 
-MIT — see [LICENSE](LICENSE).
+1. **Open the app** at http://localhost:3000.
+2. **Set up accounts** — click the credit card icon in the top-right header. Add your bank accounts and credit cards. Account type matters: credit card imports treat positive amounts as expenses; bank account imports trust the sign in the CSV.
+3. **Set up your budget categories** — go to the **Plan** tab. Create category groups (e.g. "Housing", "Food") and add categories inside each group (e.g. "Rent", "Groceries"). You can assign a monthly budget amount and an emoji to each category. Optionally add auto-categorization rules (keyword or regex) to each category — these fire at import time before the LLM runs.
+4. **Import transactions** — go to the **Ledger** tab and click **Import**. Drag-and-drop a CSV or Excel file exported from your bank. Select the account it belongs to. Preview detected rows, then confirm import. With "Auto-categorize" enabled, Ollama will categorize every transaction in the background while a progress bar tracks it.
+5. **Review transactions** — after import, the Ledger switches to the **To Review** tab automatically. Confirm or correct each transaction's category, type, and description, then mark it as reviewed.
+6. **Analyze** — visit **Reflect** for period-level charts (net cash flow, spending breakdown, income, savings rate). Visit **Plan** to see actual spending vs. your budget for the current month.
+
+---
+
+## The Three Views
+
+### Plan (`/`)
+
+A YNAB-style budget table organized into **groups** and **categories**.
+
+| Column | Description |
+|--------|-------------|
+| **Assigned** | Monthly budget amount you set for this category |
+| **Activity** | Actual spending pulled from reviewed transactions |
+| **Available** | Assigned − Activity |
+
+- Use the **month picker** to browse any month's budget vs. actuals.
+- Click a category row to open the **Category Modal**: rename it, change emoji, set a budget amount, move it to a different group, and define auto-categorization rules (contains / starts-with / regex).
+- The right panel shows a **spending donut** (actual vs. budget breakdown) and a **budget progress** bar chart.
+
+### Reflect (`/reflect`)
+
+Period-level financial analytics with an optional **compare with previous period** toggle.
+
+| Chart | Description |
+|-------|-------------|
+| **Summary cards** | Total income, total spending, net cash flow, and transaction count for the period |
+| **Net Cash Flow** | Bar chart of income vs. spending per month in the period |
+| **Spending** | Stacked bar chart of spending by category per month |
+| **Income** | Bar chart of income per month |
+| **Spending by Category** | Donut chart aggregated across the full period |
+| **Savings Rate** | Savings rate % per month, with an average line |
+
+Available periods: **This Year**, **Last Month**, **Last 3 Months**, **Last 6 Months**. When "compare" is on, each chart overlays the equivalent prior period in a muted color.
+
+### Ledger (`/ledger`)
+
+The full transaction list, split into two tabs:
+
+**All Transactions tab**
+- Search by description
+- Filter by category, account, transaction type (expense / income / transfer), date range, and amount range
+- Sort by date, description, amount, category, or type
+- Inline edit: click any cell to change the category, type, description, date, amount, or notes
+- Paginated (50 per page), with infinite-scroll load more
+
+**To Review tab**
+- Shows only transactions not yet reviewed (newly imported ones land here)
+- Review each transaction one at a time: confirm or correct category and type, then mark as reviewed
+- Reviewed transactions move to the All Transactions tab
+
+**Bulk actions** (select one or more rows in either tab):
+- Re-categorize all selected
+- Mark all as reviewed (To Review tab only)
+- AI re-categorize selected (uses Ollama)
+- Delete selected
+
+**Other actions:**
+- **Import** (top-right): drag-and-drop CSV or Excel, choose account, preview, confirm
+- **Add** (top-right): manually create a single transaction
+- **Split**: from the row actions menu, split one expense into multiple sub-transactions with their own categories
+- **Duplicate**: clone a transaction row
+
+---
+
+## Accounts
+
+Click the **credit card icon** (top-right header) to manage accounts.
+
+- Add bank accounts (🏦) or credit cards (💳)
+- Accounts appear as a filter in the Ledger and as a selector during import
+- Deleting an account unlinks its transactions but does not delete them
+- Account type affects import sign correction:
+  - **Credit card**: positive CSV amounts → stored as negative expenses; negative → positive income
+  - **Bank account**: sign in the CSV is preserved
+
+---
+
+## AI Categorization
+
+Categorization runs in the background after import (or on demand via bulk-select → AI Categorize).
+
+1. **Rules first**: each budget category can have keyword/regex rules. Transactions matching a rule are categorized instantly without touching the LLM.
+2. **LLM fallback**: remaining transactions are sent to Ollama in batches of 5. The model is given your category list and returns a JSON array of assignments.
+3. **Progress**: a progress bar in the UI polls the backend every second until the job completes.
+4. **Graceful degradation**: if Ollama is unreachable, import still completes — transactions just arrive uncategorized.
+
+The LLM is configured via environment variables (see [Changing the LLM model](#changing-the-llm-model)).
+
+---
+
+## Data
+
+| Item | Location |
+|------|----------|
+| **Database** | `./data/expenses.db` in the repo directory (host filesystem) |
+| **Model weights** | `ollama_data` Docker volume |
+
+- The database persists across all Docker operations including `docker compose down -v` (only the volume is wiped, not `./data/`).
+- **Deduplication**: transactions are hashed by `date + description + amount`. Re-uploading the same file is safe — duplicates are skipped automatically.
+- **Export**: in the Ledger, use the export endpoint (`POST /api/export`) to download all transactions as CSV. The API docs at http://localhost:8000/docs list all available endpoints.
+
+---
+
+## API Docs
+
+Start the app, then open http://localhost:8000/docs for the interactive Swagger UI.
+
+---
+
+## Configuration Reference
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_MODEL` | `mistral` | Ollama model to pull and use for categorization |
+| `OLLAMA_URL` | `http://ollama:11434` | Ollama service URL (set automatically by Docker Compose) |
+| `DB_PATH` | *(required)* | Path to SQLite database file (set automatically by Docker Compose) |
