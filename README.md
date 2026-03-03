@@ -17,7 +17,7 @@ Ledgr is a self-hosted personal finance app. Import your bank statements, let a 
 
 ## Why Ledgr?
 
-- **100% private** — your transactions never leave your machine. No cloud sync, no accounts, no telemetry beyond anonymous usage counts.
+- **100% private** — your transactions never leave your machine. No cloud sync, no accounts, no telemetry.
 - **AI categorization that works offline** — uses [Ollama](https://ollama.com) to run a local LLM. No OpenAI key, no API costs.
 - **Import from any bank** — drag and drop a CSV or Excel export from your bank. Duplicates are detected automatically.
 - **Budget tracking** — set monthly budgets per category and see actual vs. planned at a glance.
@@ -123,18 +123,6 @@ Copy `.env.example` to `.env` and uncomment any lines you want to change.
 The database survives all Docker operations including `docker compose down -v`. Only `rm -rf data/` deletes it.
 
 Transactions are deduplicated by date + description + amount — re-importing the same file is safe.
-
----
-
-## Privacy
-
-Ledgr collects **anonymous, aggregate usage counts** via [PostHog](https://posthog.com) — things like "the app started" or "an import happened". No transaction data, no file contents, no personal information of any kind is ever sent.
-
-To opt out completely, add this to your `.env` file:
-
-```
-TELEMETRY_ENABLED=false
-```
 
 ---
 
