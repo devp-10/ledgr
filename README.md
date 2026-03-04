@@ -2,6 +2,9 @@
 
 A single-user expense tracking web app that runs entirely on your machine. Import bank statements, let a local LLM (Ollama) categorize your transactions, and analyze your spending across three views: **Plan**, **Reflect**, and **Ledger**.
 
+<!-- Screenshot -->
+<!-- ![Ledgr UI](assets/screenshot.png) -->
+
 ## Tech Stack
 
 - **Backend**: FastAPI + SQLite
@@ -165,6 +168,35 @@ The LLM is configured via environment variables (see [Changing the LLM model](#c
 - The database persists across all Docker operations including `docker compose down -v` (only the volume is wiped, not `./data/`).
 - **Deduplication**: transactions are hashed by `date + description + amount`. Re-uploading the same file is safe — duplicates are skipped automatically.
 - **Export**: in the Ledger, use the export endpoint (`POST /api/export`) to download all transactions as CSV. The API docs at http://localhost:8000/docs list all available endpoints.
+
+---
+
+## Desktop Launchers
+
+Platform launchers live in `launchers/`. Each one starts Docker Compose, waits for the frontend to be ready, opens the app in Chrome's app-mode (falling back to the default browser), and shuts everything down when you close the window.
+
+### macOS
+
+`launchers/macos/Ledgr.app` is a macOS app bundle you can launch from the Dock or Spotlight.
+
+To install: drag `launchers/macos/Ledgr.app` to your `/Applications` folder.
+
+### Windows
+
+`launchers/windows/` contains a PowerShell launcher and a one-time shortcut installer.
+
+| File | Purpose |
+|------|---------|
+| `ledgr.bat` | Double-click to launch Ledgr |
+| `ledgr.ps1` | PowerShell launcher (called by the `.bat`) |
+| `install-shortcut.ps1` | Run once to add a **Ledgr** shortcut to your Desktop |
+
+**First-time setup** (run once in PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -File launchers\windows\install-shortcut.ps1
+```
+
+After that, double-click the **Ledgr** shortcut on your Desktop — or run `launchers\windows\ledgr.bat` directly.
 
 ---
 

@@ -13,12 +13,12 @@ function LedgrLogo() {
   return (
     <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect width="64" height="64" rx="14" fill="#C15F3C" />
-      {/* Bar 1 — tallest, left (L stem) */}
-      <rect x="13" y="13" width="11" height="37" rx="2.5" fill="white" />
-      {/* Bar 2 — same height as bar 3 (L foot) */}
-      <rect x="27" y="38" width="11" height="12" rx="2.5" fill="white" opacity="0.75" />
-      {/* Bar 3 — short, right (L foot) */}
-      <rect x="41" y="38" width="11" height="12" rx="2.5" fill="white" opacity="0.5" />
+      {/* slab 1 — widest, bottom */}
+      <rect x="10" y="44" width="44" height="9" rx="4.5" fill="white"/>
+      {/* slab 2 — medium, middle */}
+      <rect x="10" y="30" width="29" height="9" rx="4.5" fill="white" opacity="0.8"/>
+      {/* slab 3 — narrowest, top */}
+      <rect x="10" y="16" width="16" height="9" rx="4.5" fill="white" opacity="0.55"/>
     </svg>
   )
 }
