@@ -83,11 +83,19 @@ for candidate in \
     fi
 done
 
+CHROME_PROFILE="/tmp/ledgr-chrome-profile"
+
 if [ -n "$CHROME_BIN" ]; then
-    "$CHROME_BIN" --app="$FRONTEND_URL" --new-window &
+    # --user-data-dir forces an isolated Chrome process (not handed off to an
+    # existing instance), so we can wait on its PID and detect window close.
+    "$CHROME_BIN" --app="$FRONTEND_URL" --new-window \
+        --user-data-dir="$CHROME_PROFILE" &
+    BROWSER_PID=$!
+    wait "$BROWSER_PID"
 else
+    # No Chrome/Chromium: can't detect window close for arbitrary browsers,
+    # so fall back to a blocking Stop dialog.
     open "$FRONTEND_URL"
+    _show_running_indicator
 fi
-# Block until user clicks Stop; EXIT trap then runs docker compose down
-_show_running_indicator
 # EXIT trap fires here → docker compose down
