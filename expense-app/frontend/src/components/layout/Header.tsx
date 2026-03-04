@@ -12,19 +12,13 @@ const TABS = [
 function LedgrLogo() {
   return (
     <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <linearGradient id="ledgr-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#D9673A"/>
-          <stop offset="100%" stopColor="#9B2D0F"/>
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="14" fill="url(#ledgr-bg)" />
-      {/* Top coin (narrowest) */}
-      <rect x="21" y="15" width="22" height="9" rx="4.5" fill="white" fillOpacity="0.95"/>
-      {/* Middle coin */}
-      <rect x="15" y="27" width="34" height="9" rx="4.5" fill="white" fillOpacity="0.72"/>
-      {/* Bottom coin (widest) */}
-      <rect x="10" y="39" width="44" height="9" rx="4.5" fill="white" fillOpacity="0.50"/>
+      <rect width="64" height="64" rx="14" fill="#C15F3C" />
+      {/* slab 1 — widest, bottom */}
+      <rect x="10" y="44" width="44" height="9" rx="4.5" fill="white"/>
+      {/* slab 2 — medium, middle */}
+      <rect x="10" y="30" width="29" height="9" rx="4.5" fill="white" opacity="0.8"/>
+      {/* slab 3 — narrowest, top */}
+      <rect x="10" y="16" width="16" height="9" rx="4.5" fill="white" opacity="0.55"/>
     </svg>
   )
 }
