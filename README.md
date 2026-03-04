@@ -171,11 +171,32 @@ The LLM is configured via environment variables (see [Changing the LLM model](#c
 
 ---
 
-## macOS App
+## Desktop Launchers
 
-`macos/Ledgr.app` is an optional macOS app bundle that lets you launch Ledgr from the Dock or Spotlight. It calls `macos/ledgr.sh`, which starts Docker Compose, waits for the frontend, opens Chrome in app-mode (falling back to the default browser), and shuts everything down when the window closes.
+Platform launchers live in `platform/`. Each one starts Docker Compose, waits for the frontend to be ready, opens the app in Chrome's app-mode (falling back to the default browser), and shuts everything down when you close the window.
 
-To install: drag `macos/Ledgr.app` to your `/Applications` folder.
+### macOS
+
+`platform/macos/Ledgr.app` is a macOS app bundle you can launch from the Dock or Spotlight.
+
+To install: drag `platform/macos/Ledgr.app` to your `/Applications` folder.
+
+### Windows
+
+`platform/windows/` contains a PowerShell launcher and a one-time shortcut installer.
+
+| File | Purpose |
+|------|---------|
+| `ledgr.bat` | Double-click to launch Ledgr |
+| `ledgr.ps1` | PowerShell launcher (called by the `.bat`) |
+| `install-shortcut.ps1` | Run once to add a **Ledgr** shortcut to your Desktop |
+
+**First-time setup** (run once in PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -File platform\windows\install-shortcut.ps1
+```
+
+After that, double-click the **Ledgr** shortcut on your Desktop — or run `platform\windows\ledgr.bat` directly.
 
 ---
 

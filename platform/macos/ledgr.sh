@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMPOSE_FILE="$SCRIPT_DIR/../docker-compose.yml"
+COMPOSE_FILE="$SCRIPT_DIR/../../docker-compose.yml"
 FRONTEND_URL="http://localhost:3000"
 HEALTH_TIMEOUT=120
 LOG_FILE="/tmp/ledgr-compose.log"
