@@ -13,6 +13,7 @@ $Shortcut = $Shell.CreateShortcut($ShortcutPath)
 $Shortcut.TargetPath       = $Target
 $Shortcut.WorkingDirectory = $ScriptDir
 $Shortcut.Description      = 'Launch Ledgr expense tracker'
+$Shortcut.IconLocation     = (Join-Path $ScriptDir 'ledgr.ico') + ',0'
 $Shortcut.Save()
 
 Write-Host "Shortcut created: $ShortcutPath"
