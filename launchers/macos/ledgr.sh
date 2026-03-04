@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ledgr.sh — Start Ledgr, open the browser, shut down on exit
 
+# Augment PATH so docker/curl are found when launched as a .app bundle
+export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="$SCRIPT_DIR/../../docker-compose.yml"
 FRONTEND_URL="http://localhost:3000"

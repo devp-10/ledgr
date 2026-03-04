@@ -179,7 +179,16 @@ Platform launchers live in `launchers/`. Each one starts Docker Compose, waits f
 
 `launchers/macos/Ledgr.app` is a macOS app bundle you can launch from the Dock or Spotlight.
 
-To install: drag `launchers/macos/Ledgr.app` to your `/Applications` folder.
+**Install (one-time setup):**
+
+1. Drag `launchers/macos/Ledgr.app` to your `/Applications` folder.
+2. Remove the macOS quarantine flag (required for all unsigned apps):
+   ```bash
+   xattr -cr /Applications/Ledgr.app
+   ```
+3. Double-click `Ledgr.app` to launch.
+
+> macOS Gatekeeper blocks unsigned apps by default. Step 2 is required once — you won't need to repeat it after updates unless you re-copy the `.app`.
 
 ### Windows
 
