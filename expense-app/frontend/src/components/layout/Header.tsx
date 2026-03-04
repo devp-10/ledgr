@@ -19,18 +19,12 @@ function LedgrLogo() {
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="14" fill="url(#ledgr-bg)" />
-      {/* Ascending bars */}
-      <rect x="11" y="42" width="10" height="10" rx="2.5" fill="white" fillOpacity="0.45"/>
-      <rect x="25" y="30" width="10" height="22" rx="2.5" fill="white" fillOpacity="0.7"/>
-      <rect x="39" y="18" width="10" height="34" rx="2.5" fill="white"/>
-      {/* Baseline */}
-      <rect x="9" y="53" width="46" height="3" rx="1.5" fill="white" fillOpacity="0.3"/>
-      {/* Sparkline */}
-      <polyline points="16,42 30,30 44,18" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.45"/>
-      {/* Dots at bar tops */}
-      <circle cx="16" cy="42" r="3" fill="white" opacity="0.6"/>
-      <circle cx="30" cy="30" r="3" fill="white" opacity="0.8"/>
-      <circle cx="44" cy="18" r="3.5" fill="white"/>
+      {/* Top coin (narrowest) */}
+      <rect x="21" y="15" width="22" height="9" rx="4.5" fill="white" fillOpacity="0.95"/>
+      {/* Middle coin */}
+      <rect x="15" y="27" width="34" height="9" rx="4.5" fill="white" fillOpacity="0.72"/>
+      {/* Bottom coin (widest) */}
+      <rect x="10" y="39" width="44" height="9" rx="4.5" fill="white" fillOpacity="0.50"/>
     </svg>
   )
 }
