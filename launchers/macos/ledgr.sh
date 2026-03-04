@@ -85,11 +85,9 @@ done
 
 if [ -n "$CHROME_BIN" ]; then
     "$CHROME_BIN" --app="$FRONTEND_URL" --new-window &
-    BROWSER_PID=$!
-    wait "$BROWSER_PID"
 else
-    # No Chrome/Chromium: open default browser + block on native macOS dialog
     open "$FRONTEND_URL"
-    _show_running_indicator
 fi
+# Block until user clicks Stop; EXIT trap then runs docker compose down
+_show_running_indicator
 # EXIT trap fires here → docker compose down
