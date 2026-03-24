@@ -37,7 +37,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   const net = payload.find((p: any) => p.dataKey === 'net')?.value ?? 0
   const prev = payload.find((p: any) => p.dataKey === 'compareNet')?.value
-  const fmt = (v: number) => (Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(1)}k` : `$${v}`)
+  const fmt = (v: number) => (Math.abs(v) >= 1000 ? `$${(v / 1000).toFixed(2)}k` : `$${v.toFixed(2)}`)
   return (
     <div className="bg-surface dark:bg-gray-800 rounded-lg shadow-soft border border-border-light dark:border-border-dark p-3 text-sm">
       <div className="text-gray-500 dark:text-gray-400 text-xs mb-1.5">{label}</div>
@@ -110,7 +110,7 @@ export function NetCashFlowBar({ data, compareData }: NetCashFlowBarProps) {
           width={58}
           tickFormatter={v => {
             if (v === 0) return '$0'
-            return `${v < 0 ? '-' : ''}$${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toFixed(0) + 'k' : Math.abs(v)}`
+            return `${v < 0 ? '-' : ''}$${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toFixed(2) + 'k' : Math.abs(v).toFixed(2)}`
           }}
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />

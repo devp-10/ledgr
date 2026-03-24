@@ -9,7 +9,7 @@ interface CategoryDonutProps {
 }
 
 function formatMoney(n: number) {
-  return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

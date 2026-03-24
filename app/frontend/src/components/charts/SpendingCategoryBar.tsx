@@ -13,7 +13,7 @@ interface SpendingCategoryBarProps {
 }
 
 function fmtK(v: number) {
-  return `$${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toFixed(1) + 'k' : Math.abs(v)}`
+  return `$${Math.abs(v) >= 1000 ? (Math.abs(v) / 1000).toFixed(2) + 'k' : Math.abs(v).toFixed(2)}`
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,7 +24,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     <div className="bg-surface dark:bg-gray-800 rounded-lg shadow-soft border border-border-light dark:border-border-dark p-3 text-sm min-w-[140px]">
       <div className="text-gray-500 dark:text-gray-400 text-xs font-medium mb-2">{label}</div>
       <div className="space-y-1">
-        {[...payload].reverse().map((p: any) => (
+        {[...payload].sort((a: any, b: any) => (b.value ?? 0) - (a.value ?? 0)).map((p: any) => (
           p.value > 0 && (
             <div key={p.dataKey} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-1.5">
