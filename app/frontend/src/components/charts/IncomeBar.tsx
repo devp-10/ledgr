@@ -12,7 +12,7 @@ interface IncomeBarProps {
 const GREEN = '#4a9d5b'
 
 function fmtK(v: number) {
-  return `$${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v}`
+  return `$${v >= 1000 ? (v / 1000).toFixed(2) + 'k' : v.toFixed(2)}`
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
